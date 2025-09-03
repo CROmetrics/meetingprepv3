@@ -6,7 +6,6 @@ import openaiService from '../services/openai.service';
 import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { logUsage } from '../utils/logger';
 import { 
-  Attendee, 
   BDMeetingRequest, 
   ResearchResult,
   AttendeeResearch 
@@ -201,6 +200,28 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
         sourcesCount: researchResult.sources.length,
         generatedAt: new Date().toISOString(),
       },
+    },
+  });
+});
+
+export const searchDeals = asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query;
+  
+  if (!query || typeof query !== 'string') {
+    throw new AppError(400, 'Query parameter is required', 'VALIDATION_ERROR');
+  }
+
+  if (!hubspotService) {
+    throw new AppError(400, 'HubSpot service not configured', 'SERVICE_UNAVAILABLE');
+  }
+
+  const results = await hubspotService.searchDeals(query);
+  
+  res.json({
+    success: true,
+    data: {
+      results,
+      count: results.length,
     },
   });
 });

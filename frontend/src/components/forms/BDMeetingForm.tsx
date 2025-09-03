@@ -1,411 +1,347 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Building2, Users, Target, FileText, Search, Plus, Trash2, Mail, Briefcase, Linkedin } from 'lucide-react';
+import { Users, Building2, Target, Hash, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
-import { BDMeetingRequest, Attendee } from '../../types';
+import { BDMeetingFormData } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useDebounce } from '../../hooks/useDebounce';
+import ReactMarkdown from 'react-markdown';
 
-export const BDMeetingForm: React.FC = () => {
-  const [formData, setFormData] = useLocalStorage<BDMeetingRequest>('bdMeetingForm', {
-    company: '',
-    attendees: [],
-    purpose: '',
-    additionalContext: '',
-  });
-
-  const [currentAttendee, setCurrentAttendee] = useState<Attendee>({
+export default function BDMeetingForm() {
+  const [formData, setFormData] = useLocalStorage<BDMeetingFormData>('bdMeetingForm', {
     name: '',
     email: '',
-    title: '',
     company: '',
-    linkedinUrl: '',
+    role: '',
+    notes: '',
+    dealId: '',
   });
 
-  const [activeStep, setActiveStep] = useState<'research' | 'generate' | 'hubspot'>('research');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Research attendees mutation
-  const researchMutation = useMutation({
-    mutationFn: (data: BDMeetingRequest) => api.researchAttendees(data),
-    onSuccess: () => setActiveStep('generate'),
-  });
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Generate report mutation
+  // Search HubSpot deals
+  React.useEffect(() => {
+    if (debouncedSearchTerm.length >= 3) {
+      setIsSearching(true);
+      api.searchHubspotDeals(debouncedSearchTerm)
+        .then((response) => {
+          setSearchResults(response.data.results || []);
+        })
+        .catch((error) => {
+          console.error('Search failed:', error);
+          setSearchResults([]);
+        })
+        .finally(() => {
+          setIsSearching(false);
+        });
+    } else {
+      setSearchResults([]);
+    }
+  }, [debouncedSearchTerm]);
+
+  // Generate BD prep mutation
   const generateMutation = useMutation({
-    mutationFn: (data: BDMeetingRequest) => api.generateBDReport(data),
+    mutationFn: (data: BDMeetingFormData) => api.generateBDPrep(data),
   });
 
-  // Add to HubSpot mutation
-  const hubspotMutation = useMutation({
-    mutationFn: (attendees: Attendee[]) => api.addToHubSpot(attendees),
-  });
-
-  const handleResearch = () => {
-    if (formData.company && formData.attendees.length > 0) {
-      researchMutation.mutate(formData);
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    generateMutation.mutate(formData);
   };
 
-  const handleGenerate = () => {
-    if (formData.company && formData.attendees.length > 0) {
-      generateMutation.mutate(formData);
-    }
-  };
-
-  const handleAddToHubSpot = () => {
-    hubspotMutation.mutate(formData.attendees);
-  };
-
-  const addAttendee = () => {
-    if (currentAttendee.name) {
-      setFormData({
-        ...formData,
-        attendees: [...formData.attendees, { ...currentAttendee }],
-      });
-      setCurrentAttendee({
-        name: '',
-        email: '',
-        title: '',
-        company: '',
-        linkedinUrl: '',
-      });
-    }
-  };
-
-  const removeAttendee = (index: number) => {
+  const selectDeal = (deal: any) => {
     setFormData({
       ...formData,
-      attendees: formData.attendees.filter((_, i) => i !== index),
+      dealId: deal.id,
+      company: deal.properties.dealname || '',
     });
+    setSearchTerm('');
+    setSearchResults([]);
   };
 
-  const isProcessing = researchMutation.isPending || generateMutation.isPending || hubspotMutation.isPending;
-
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-6 text-gray-900">Business Development Intelligence</h2>
-
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-8">
-          <div className={clsx(
-            'flex-1 text-center pb-2 border-b-2 cursor-pointer',
-            activeStep === 'research' ? 'border-blue-600 text-blue-600' : 'border-gray-300'
-          )} onClick={() => setActiveStep('research')}>
-            <Search className="inline w-5 h-5 mr-1" />
-            Research
+    <div className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Contact Information */}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+              <Users className="inline w-4 h-4 mr-1 text-cro-blue-700" />
+              Contact Name
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="John Doe"
+              className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
+              required
+            />
           </div>
-          <div className={clsx(
-            'flex-1 text-center pb-2 border-b-2 cursor-pointer',
-            activeStep === 'generate' ? 'border-blue-600 text-blue-600' : 'border-gray-300'
-          )} onClick={() => setActiveStep('generate')}>
-            <FileText className="inline w-5 h-5 mr-1" />
-            Generate Report
-          </div>
-          <div className={clsx(
-            'flex-1 text-center pb-2 border-b-2 cursor-pointer',
-            activeStep === 'hubspot' ? 'border-blue-600 text-blue-600' : 'border-gray-300'
-          )} onClick={() => setActiveStep('hubspot')}>
-            <Users className="inline w-5 h-5 mr-1" />
-            Add to HubSpot
+          <div>
+            <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="john@company.com"
+              className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
+              required
+            />
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* Company Name */}
+        {/* Company & Role */}
+        <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Building2 className="inline w-4 h-4 mr-1" />
-              Target Company
+            <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+              <Building2 className="inline w-4 h-4 mr-1 text-cro-green-600" />
+              Company
             </label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              placeholder="Company name"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Acme Corp"
+              className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
               required
             />
           </div>
-
-          {/* Attendees Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Users className="inline w-4 h-4 mr-1" />
-              Meeting Attendees
+            <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+              Role/Title
             </label>
-
-            {/* Add Attendee Form */}
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
-              <div className="grid grid-cols-2 gap-4 mb-2">
-                <input
-                  type="text"
-                  value={currentAttendee.name}
-                  onChange={(e) => setCurrentAttendee({ ...currentAttendee, name: e.target.value })}
-                  placeholder="Full Name *"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="email"
-                  value={currentAttendee.email}
-                  onChange={(e) => setCurrentAttendee({ ...currentAttendee, email: e.target.value })}
-                  placeholder="Email"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  value={currentAttendee.title}
-                  onChange={(e) => setCurrentAttendee({ ...currentAttendee, title: e.target.value })}
-                  placeholder="Title/Role"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  value={currentAttendee.company}
-                  onChange={(e) => setCurrentAttendee({ ...currentAttendee, company: e.target.value })}
-                  placeholder="Company (if different)"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="url"
-                  value={currentAttendee.linkedinUrl}
-                  onChange={(e) => setCurrentAttendee({ ...currentAttendee, linkedinUrl: e.target.value })}
-                  placeholder="LinkedIn URL (optional)"
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  type="button"
-                  onClick={addAttendee}
-                  disabled={!currentAttendee.name}
-                  className={clsx(
-                    'px-4 py-2 rounded-md flex items-center justify-center',
-                    currentAttendee.name
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  )}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Attendee
-                </button>
-              </div>
-            </div>
-
-            {/* Attendees List */}
-            {formData.attendees.length > 0 && (
-              <div className="space-y-2">
-                {formData.attendees.map((attendee, index) => (
-                  <div key={index} className="bg-white border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{attendee.name}</p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {attendee.email && (
-                            <span className="text-xs text-gray-600 flex items-center">
-                              <Mail className="w-3 h-3 mr-1" />
-                              {attendee.email}
-                            </span>
-                          )}
-                          {attendee.title && (
-                            <span className="text-xs text-gray-600 flex items-center">
-                              <Briefcase className="w-3 h-3 mr-1" />
-                              {attendee.title}
-                            </span>
-                          )}
-                          {attendee.company && (
-                            <span className="text-xs text-gray-600 flex items-center">
-                              <Building2 className="w-3 h-3 mr-1" />
-                              {attendee.company}
-                            </span>
-                          )}
-                          {attendee.linkedinUrl && (
-                            <span className="text-xs text-gray-600 flex items-center">
-                              <Linkedin className="w-3 h-3 mr-1" />
-                              LinkedIn
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeAttendee(index)}
-                        className="ml-2 text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Purpose */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Target className="inline w-4 h-4 mr-1" />
-              Meeting Purpose
-            </label>
-            <textarea
-              value={formData.purpose}
-              onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-              placeholder="What are we trying to achieve in this meeting?"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            <input
+              type="text"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              placeholder="VP of Marketing"
+              className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
             />
           </div>
+        </div>
 
-          {/* Additional Context */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Context
-            </label>
-            <textarea
-              value={formData.additionalContext}
-              onChange={(e) => setFormData({ ...formData, additionalContext: e.target.value })}
-              placeholder="Any other relevant information..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            {activeStep === 'research' && (
-              <button
-                onClick={handleResearch}
-                disabled={!formData.company || formData.attendees.length === 0 || isProcessing}
-                className={clsx(
-                  'flex-1 py-3 px-4 rounded-md font-medium flex items-center justify-center',
-                  formData.company && formData.attendees.length > 0 && !isProcessing
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                )}
-              >
-                {researchMutation.isPending ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <Search className="w-5 h-5 mr-2" />
-                    Research Attendees
-                  </>
-                )}
-              </button>
-            )}
-
-            {activeStep === 'generate' && (
-              <button
-                onClick={handleGenerate}
-                disabled={!formData.company || formData.attendees.length === 0 || isProcessing}
-                className={clsx(
-                  'flex-1 py-3 px-4 rounded-md font-medium flex items-center justify-center',
-                  formData.company && formData.attendees.length > 0 && !isProcessing
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                )}
-              >
-                {generateMutation.isPending ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <FileText className="w-5 h-5 mr-2" />
-                    Generate Intelligence Report
-                  </>
-                )}
-              </button>
-            )}
-
-            {activeStep === 'hubspot' && (
-              <button
-                onClick={handleAddToHubSpot}
-                disabled={formData.attendees.length === 0 || isProcessing}
-                className={clsx(
-                  'flex-1 py-3 px-4 rounded-md font-medium flex items-center justify-center',
-                  formData.attendees.length > 0 && !isProcessing
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                )}
-              >
-                {hubspotMutation.isPending ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <>
-                    <Users className="w-5 h-5 mr-2" />
-                    Add to HubSpot
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Error Display */}
-          {(researchMutation.isError || generateMutation.isError || hubspotMutation.isError) && (
-            <ErrorMessage 
-              message={
-                researchMutation.error?.message || 
-                generateMutation.error?.message || 
-                hubspotMutation.error?.message || 
-                'An error occurred'
-              } 
-            />
-          )}
-
-          {/* Results Display */}
-          {researchMutation.isSuccess && researchMutation.data && (
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Research Results</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <pre className="whitespace-pre-wrap text-sm">
-                  {JSON.stringify(researchMutation.data.data, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
-
-          {generateMutation.isSuccess && generateMutation.data?.data?.report && (
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Intelligence Report</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="prose max-w-none">
-                  <pre className="whitespace-pre-wrap font-sans text-sm">
-                    {generateMutation.data.data.report}
-                  </pre>
+        {/* HubSpot Deal Search */}
+        <div>
+          <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+            <Hash className="inline w-4 h-4 mr-1 text-cro-purple-700" />
+            HubSpot Deal <span className="text-cro-purple-700 font-normal">(Optional)</span>
+          </label>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search for a deal..."
+            className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
+          />
+          
+          {/* Search Results Dropdown */}
+          {(isSearching || searchResults.length > 0) && (
+            <div className="mt-2 bg-white border border-cro-plat-300 rounded-xl shadow-md max-h-48 overflow-y-auto">
+              {isSearching ? (
+                <div className="p-4 text-center">
+                  <LoadingSpinner size="sm" message="Searching deals..." />
                 </div>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(generateMutation.data.data.report);
-                    alert('Report copied to clipboard!');
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                >
-                  Copy Report
-                </button>
-                <button
-                  onClick={() => setActiveStep('hubspot')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Add to HubSpot
-                </button>
-              </div>
+              ) : (
+                searchResults.map((deal) => (
+                  <button
+                    key={deal.id}
+                    type="button"
+                    onClick={() => selectDeal(deal)}
+                    className="w-full px-4 py-3 text-left hover:bg-cro-blue-100 transition-colors border-b border-cro-plat-100 last:border-b-0"
+                  >
+                    <div className="font-medium text-cro-soft-black-700">
+                      {deal.properties.dealname}
+                    </div>
+                    <div className="text-sm text-cro-purple-700">
+                      Stage: {deal.properties.dealstage} | Amount: ${deal.properties.amount || 0}
+                    </div>
+                  </button>
+                ))
+              )}
             </div>
           )}
 
-          {hubspotMutation.isSuccess && hubspotMutation.data && (
-            <div className="mt-6 border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">HubSpot Results</h3>
-              <div className="bg-green-50 rounded-lg p-4">
-                <p className="text-green-800">
-                  Successfully processed {hubspotMutation.data.data?.totalProcessed} contacts.
-                  {hubspotMutation.data.data?.successCount} added to HubSpot.
-                </p>
-              </div>
+          {formData.dealId && (
+            <div className="mt-2 p-3 bg-cro-green-100 rounded-xl">
+              <p className="text-sm text-cro-green-700 font-medium">
+                ✓ Deal Selected: {formData.company}
+              </p>
             </div>
           )}
         </div>
-      </div>
+
+        {/* Notes */}
+        <div>
+          <label className="block text-sm font-medium text-cro-soft-black-700 mb-2">
+            <Target className="inline w-4 h-4 mr-1 text-cro-yellow-600" />
+            Meeting Notes & Context
+          </label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            rows={4}
+            placeholder="Key topics to discuss, background information, specific goals..."
+            className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors resize-none"
+          />
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={generateMutation.isPending}
+          className={clsx(
+            'w-full flex items-center justify-center px-6 py-3 rounded-2xl font-medium text-white transition-all',
+            'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cro-blue-700',
+            generateMutation.isPending
+              ? 'bg-cro-plat-300 cursor-not-allowed'
+              : 'bg-cro-blue-700 hover:bg-cro-blue-800'
+          )}
+        >
+          {generateMutation.isPending ? (
+            <>
+              <LoadingSpinner size="sm" />
+              <span className="ml-2">Preparing Meeting Intel...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-5 h-5 mr-2" />
+              Generate BD Prep
+            </>
+          )}
+        </button>
+      </form>
+
+      {/* Error Display */}
+      {generateMutation.isError && (
+        <ErrorMessage
+          message={generateMutation.error?.message || 'Failed to generate BD prep'}
+          onClose={() => generateMutation.reset()}
+        />
+      )}
+
+      {/* Results Display */}
+      {generateMutation.isSuccess && generateMutation.data && (
+        <div className="mt-8 bg-white rounded-2xl border border-cro-plat-300 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-cro-purple-400 to-cro-blue-100 bg-opacity-30 p-6 border-b border-cro-plat-300">
+            <h3 className="text-2xl font-bold text-cro-soft-black-700 flex items-center">
+              <Sparkles className="w-6 h-6 mr-2 text-cro-blue-700" />
+              BD Meeting Preparation Complete
+            </h3>
+          </div>
+          <div className="p-6">
+            {/* Summary Stats */}
+            <div className="grid md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-cro-blue-100 rounded-xl p-4">
+                <p className="text-sm text-cro-blue-700 font-medium">Contact</p>
+                <p className="text-lg font-bold text-cro-soft-black-700">{formData.name}</p>
+              </div>
+              <div className="bg-cro-green-100 rounded-xl p-4">
+                <p className="text-sm text-cro-green-700 font-medium">Company</p>
+                <p className="text-lg font-bold text-cro-soft-black-700">{formData.company}</p>
+              </div>
+              <div className="bg-cro-yellow-100 rounded-xl p-4">
+                <p className="text-sm text-cro-yellow-700 font-medium">Status</p>
+                <p className="text-lg font-bold text-cro-soft-black-700">Ready</p>
+              </div>
+            </div>
+
+            {/* Prep Content */}
+            <div className="bg-cro-plat-100 rounded-2xl p-6">
+              <button
+                onClick={() => {
+                  const content = generateMutation.data.data.companyResearch + '\n\n' + 
+                                 generateMutation.data.data.executiveProfile + '\n\n' + 
+                                 generateMutation.data.data.talkingPoints;
+                  navigator.clipboard.writeText(content);
+                  alert('BD prep copied to clipboard!');
+                }}
+                className="mb-4 px-4 py-2 bg-cro-green-600 text-white rounded-xl hover:bg-cro-green-700 transition-colors text-sm font-medium"
+              >
+                Copy All to Clipboard
+              </button>
+
+              {/* Company Research */}
+              <div className="mb-8">
+                <h4 className="text-xl font-bold text-cro-soft-black-700 mb-4 flex items-center">
+                  <Building2 className="w-5 h-5 mr-2 text-cro-green-600" />
+                  Company Research
+                </h4>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({children}) => <p className="text-cro-purple-700 mb-3 leading-relaxed">{children}</p>,
+                      ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+                      li: ({children}) => <li className="text-cro-purple-700">{children}</li>,
+                      strong: ({children}) => <strong className="font-semibold text-cro-soft-black-700">{children}</strong>,
+                    }}
+                  >
+                    {generateMutation.data.data.companyResearch}
+                  </ReactMarkdown>
+                </div>
+              </div>
+
+              {/* Executive Profile */}
+              <div className="mb-8">
+                <h4 className="text-xl font-bold text-cro-soft-black-700 mb-4 flex items-center">
+                  <Users className="w-5 h-5 mr-2 text-cro-blue-700" />
+                  Executive Profile
+                </h4>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({children}) => <p className="text-cro-purple-700 mb-3 leading-relaxed">{children}</p>,
+                      ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+                      li: ({children}) => <li className="text-cro-purple-700">{children}</li>,
+                      strong: ({children}) => <strong className="font-semibold text-cro-soft-black-700">{children}</strong>,
+                    }}
+                  >
+                    {generateMutation.data.data.executiveProfile}
+                  </ReactMarkdown>
+                </div>
+              </div>
+
+              {/* Talking Points */}
+              <div>
+                <h4 className="text-xl font-bold text-cro-soft-black-700 mb-4 flex items-center">
+                  <Target className="w-5 h-5 mr-2 text-cro-yellow-600" />
+                  Strategic Talking Points
+                </h4>
+                <div className="prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({children}) => <p className="text-cro-purple-700 mb-3 leading-relaxed">{children}</p>,
+                      ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2">{children}</ul>,
+                      li: ({children}) => <li className="text-cro-purple-700">{children}</li>,
+                      strong: ({children}) => <strong className="font-semibold text-cro-soft-black-700">{children}</strong>,
+                    }}
+                  >
+                    {generateMutation.data.data.talkingPoints}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            </div>
+
+            {/* HubSpot Update Status */}
+            {generateMutation.data.data.hubspotUpdated && (
+              <div className="mt-4 p-4 bg-cro-green-100 rounded-xl">
+                <p className="text-cro-green-700 font-medium">
+                  ✓ HubSpot deal has been updated with meeting notes
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+}

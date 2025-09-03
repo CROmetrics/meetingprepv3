@@ -13,7 +13,7 @@ export const CONSTANTS = {
     DEFAULT_LOOKBACK_DAYS: 14,
     MAX_THREAD_EXPANSIONS: 20,
     CHANNEL_TYPES: 'public_channel,private_channel',
-    CHANNEL_FILTER_PREFIXES: ['bd-', 'internal-'],
+    CHANNEL_FILTER_PREFIXES: [],  // Empty array to show all channels
   },
 
   // HubSpot Configuration

@@ -26,6 +26,7 @@ router.post('/run', meetingController.generateMeetingBrief);
 router.post('/bd/research-attendees', bdController.researchAttendees);
 router.post('/bd/generate', bdController.generateBDReport);
 router.post('/bd/add-to-hubspot', bdController.addToHubSpot);
+router.get('/bd/search-deals', bdController.searchDeals);
 
 // Debug routes
 router.get('/usage-logs', debugController.getUsageLogs);

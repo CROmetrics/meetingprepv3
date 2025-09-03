@@ -15,17 +15,17 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
 }) => {
   return (
     <div className={clsx(
-      'bg-red-50 border border-red-200 rounded-lg p-4 flex items-start',
+      'bg-cro-red-300 border border-cro-red-600 rounded-2xl p-4 flex items-start',
       className
     )}>
-      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+      <AlertCircle className="w-5 h-5 text-cro-red-600 mt-0.5 mr-3 flex-shrink-0" />
       <div className="flex-1">
-        <p className="text-sm text-red-800">{message}</p>
+        <p className="text-sm text-cro-red-600 font-medium">{message}</p>
       </div>
       {onClose && (
         <button
           onClick={onClose}
-          className="ml-3 flex-shrink-0 text-red-600 hover:text-red-800"
+          className="ml-3 flex-shrink-0 text-cro-red-600 hover:text-cro-red-500 transition-colors"
         >
           <X className="w-5 h-5" />
         </button>

@@ -1,3 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;800&family=Caveat:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Blues */
+    --cro-blue-800: #0F8AFF;
+    --cro-blue-700: #2996FF;
+    --cro-blue-500: #399EFF;
+    --cro-blue-400: #61B1FF;
+    --cro-blue-200: #9CCEFF;
+    --cro-blue-100: #E0F0FF;
+
+    /* Greens */
+    --cro-green-700: #509A6A;
+    --cro-green-600: #56A471;
+    --cro-green-500: #57A773;
+    --cro-green-400: #79B98F;
+    --cro-green-200: #ABD3B9;
+    --cro-green-100: #DEEDE3;
+
+    /* Purple */
+    --cro-purple-800: #484D6D;
+    --cro-purple-700: #6D718A;
+    --cro-purple-400: #A3A6B6;
+
+    /* Platinum (neutrals) */
+    --cro-plat-400: #D5DDD9;
+    --cro-plat-300: #E3E8E6;
+    --cro-plat-100: #F4F6F5;
+
+    /* Yellow */
+    --cro-yellow-700: #C7870A;
+    --cro-yellow-600: #F5B841;
+    --cro-yellow-500: #F7C667;
+    --cro-yellow-400: #FADCA0;
+    --cro-yellow-100: #FCEDCF;
+
+    /* Red (errors/destructive only) */
+    --cro-red-600: #EB0000;
+    --cro-red-500: #FF0000;
+    --cro-red-300: #FFD6D6;
+
+    /* Core */
+    --cro-soft-black-700: #2F2B2F;
+    --cro-white: #FFFFFF;
+
+    /* Rounding */
+    --radius: 1.5rem;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--cro-soft-black-700);
+    background-color: var(--cro-plat-100);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: var(--cro-soft-black-700);
+  }
+
+  h1 { font-size: 3rem; line-height: 1.2; }
+  h2 { font-size: 2.25rem; line-height: 1.25; }
+  h3 { font-size: 1.875rem; line-height: 1.3; }
+  h4 { font-size: 1.5rem; line-height: 1.35; }
+  h5 { font-size: 1.25rem; line-height: 1.4; }
+  h6 { font-size: 1.125rem; line-height: 1.45; }
+}

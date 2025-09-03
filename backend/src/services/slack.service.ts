@@ -48,12 +48,14 @@ class SlackService {
         }
       }
 
-      // Filter channels based on prefix
-      const filteredChannels = channels.filter(channel => 
-        CONSTANTS.SLACK.CHANNEL_FILTER_PREFIXES.some(prefix => 
-          channel.name.startsWith(prefix)
-        )
-      );
+      // Filter channels based on prefix (if any prefixes are defined)
+      const filteredChannels = CONSTANTS.SLACK.CHANNEL_FILTER_PREFIXES.length > 0 
+        ? channels.filter(channel => 
+            CONSTANTS.SLACK.CHANNEL_FILTER_PREFIXES.some(prefix => 
+              channel.name.startsWith(prefix)
+            )
+          )
+        : channels; // Return all channels if no filter prefixes
 
       logger.info(`Listed ${filteredChannels.length} Slack channels`);
       return filteredChannels;
@@ -114,6 +116,29 @@ class SlackService {
     );
 
     try {
+      // First check if we can get channel info (to see if we're already in it)
+      try {
+        const info = await client.conversations.info({ channel: channelId });
+        logger.info(`Channel ${channelId} info: is_member=${info.channel?.is_member}, is_channel=${info.channel?.is_channel}, is_private=${info.channel?.is_private}`);
+        
+        // If we're not a member and it's a public channel, try to join
+        if (!info.channel?.is_member && info.channel?.is_channel && !info.channel?.is_private) {
+          try {
+            await client.conversations.join({ channel: channelId });
+            logger.info(`Successfully joined channel ${channelId}`);
+          } catch (joinError: any) {
+            logger.warn(`Could not join channel ${channelId}: ${joinError?.data?.error || joinError?.message || joinError}`);
+            
+            if (joinError?.data?.error === 'missing_scope') {
+              throw new Error('The Slack bot needs the "channels:join" scope to automatically join public channels. Please either: 1) Add the bot to the channel manually via Slack, or 2) Update the bot\'s OAuth scopes to include "channels:join".');
+            }
+          }
+        }
+      } catch (infoError: any) {
+        logger.warn(`Could not get channel info for ${channelId}: ${infoError?.data?.error || infoError?.message}`);
+        // Continue anyway - the history call will fail if we don't have access
+      }
+
       let cursor: string | undefined;
       
       // Fetch messages with pagination
@@ -190,9 +215,19 @@ class SlackService {
         lookbackDays,
         totalMessages: sortedMessages.length,
       };
-    } catch (error) {
+    } catch (error: any) {
       logger.error(`Error fetching channel context for ${channelId}:`, error);
-      throw new Error('Failed to fetch channel context');
+      
+      // Provide more specific error messages
+      if (error?.data?.error === 'not_in_channel') {
+        throw new Error('The Slack bot is not a member of this channel. To fix this:\n\n1. Go to the channel in Slack\n2. Type /invite @[your-bot-name]\n3. Try again\n\nNote: The bot needs to be manually added to channels for security reasons.');
+      } else if (error?.data?.error === 'channel_not_found') {
+        throw new Error('Channel not found. Please select a valid channel.');
+      } else if (error?.data?.error === 'invalid_auth') {
+        throw new Error('Slack authentication failed. Please check your Slack token configuration.');
+      }
+      
+      throw new Error('Failed to fetch channel context: ' + (error?.message || 'Unknown error'));
     }
   }
 

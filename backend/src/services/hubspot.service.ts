@@ -230,6 +230,7 @@ class HubSpotService {
 
     try {
       // Remove id from properties if present
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...updateProperties } = properties;
 
       await client.patch(`/crm/v3/objects/contacts/${contactId}`, {
@@ -261,6 +262,33 @@ class HubSpotService {
     } catch (error) {
       logger.error(`Error fetching HubSpot contact ${contactId}:`, error);
       return null;
+    }
+  }
+
+  async searchDeals(query: string): Promise<any[]> {
+    const client = this.ensureClient();
+
+    try {
+      const response = await client.post('/crm/v3/objects/deals/search', {
+        filterGroups: [
+          {
+            filters: [
+              {
+                propertyName: 'dealname',
+                operator: 'CONTAINS_TOKEN',
+                value: query,
+              },
+            ],
+          },
+        ],
+        properties: ['dealname', 'amount', 'dealstage', 'closedate', 'hs_object_id'],
+        limit: 10,
+      });
+
+      return response.data.results || [];
+    } catch (error) {
+      logger.error(`Error searching HubSpot deals:`, error);
+      return [];
     }
   }
 }

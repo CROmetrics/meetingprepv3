@@ -1,135 +1,152 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { FileText, Briefcase, BarChart3, Settings } from 'lucide-react';
-import { clsx } from 'clsx';
-import { MeetingBriefForm } from './components/forms/MeetingBriefForm';
-import { BDMeetingForm } from './components/forms/BDMeetingForm';
+import MeetingBriefForm from './components/forms/MeetingBriefForm';
+import BDMeetingForm from './components/forms/BDMeetingForm';
+import { Briefcase, Users, Sparkles } from 'lucide-react';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-type TabType = 'internal' | 'bd' | 'analytics' | 'settings';
+type Tab = 'meeting' | 'bd';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabType>('internal');
+  const [activeTab, setActiveTab] = useState<Tab>('meeting');
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-gray-100">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  CroMetrics Meeting Intelligence
+      <div className="min-h-screen bg-cro-plat-100">
+        {/* Navbar */}
+        <nav className="bg-white border-b border-cro-plat-300 backdrop-blur-sm sticky top-0 z-50">
+          <div className="container mx-auto px-6">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center space-x-2">
+                <Sparkles className="h-8 w-8 text-cro-blue-700" />
+                <h1 className="text-2xl font-bold text-cro-soft-black-700">
+                  CroMetrics AI Suite
                 </h1>
               </div>
-              <div className="text-sm text-gray-500">
-                Executive Meeting Brief Generator
+              <div className="flex items-center space-x-1 bg-cro-plat-100 rounded-2xl p-1">
+                <TabButton
+                  active={activeTab === 'meeting'}
+                  onClick={() => setActiveTab('meeting')}
+                  icon={<Users className="h-4 w-4" />}
+                  label="Meeting Brief"
+                />
+                <TabButton
+                  active={activeTab === 'bd'}
+                  onClick={() => setActiveTab('bd')}
+                  icon={<Briefcase className="h-4 w-4" />}
+                  label="BD Prep"
+                />
               </div>
             </div>
           </div>
-        </header>
+        </nav>
 
-        {/* Navigation Tabs */}
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => setActiveTab('internal')}
-                className={clsx(
-                  'py-4 px-1 border-b-2 font-medium text-sm flex items-center',
-                  activeTab === 'internal'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Internal Meetings
-              </button>
-              <button
-                onClick={() => setActiveTab('bd')}
-                className={clsx(
-                  'py-4 px-1 border-b-2 font-medium text-sm flex items-center',
-                  activeTab === 'bd'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
-                <Briefcase className="w-4 h-4 mr-2" />
-                Business Development
-              </button>
-              <button
-                onClick={() => setActiveTab('analytics')}
-                className={clsx(
-                  'py-4 px-1 border-b-2 font-medium text-sm flex items-center',
-                  activeTab === 'analytics'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Analytics
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={clsx(
-                  'py-4 px-1 border-b-2 font-medium text-sm flex items-center',
-                  activeTab === 'settings'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                )}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
-              </button>
-            </nav>
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-cro-blue-100 via-white to-cro-green-100 py-12">
+          <div className="container mx-auto px-6">
+            <div className="text-center max-w-3xl mx-auto">
+              <span className="inline-block px-4 py-2 bg-cro-yellow-100 text-cro-yellow-700 rounded-xl text-sm font-medium mb-4">
+                AI-Powered Tools
+              </span>
+              <h2 className="text-4xl font-bold text-cro-soft-black-700 mb-4">
+                {activeTab === 'meeting' ? 'Meeting Brief Generator' : 'BD Meeting Preparation'}
+              </h2>
+              <p className="text-lg text-cro-purple-700 leading-relaxed">
+                {activeTab === 'meeting' 
+                  ? 'Leverage AI to research attendees, companies, and generate comprehensive meeting briefs with strategic insights.'
+                  : 'Prepare for business development meetings with AI-powered research on prospects and automated CRM updates.'}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <main className="py-8">
-          {activeTab === 'internal' && <MeetingBriefForm />}
-          {activeTab === 'bd' && <BDMeetingForm />}
-          {activeTab === 'analytics' && (
-            <div className="max-w-4xl mx-auto p-6">
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Usage Analytics</h2>
-                <p className="text-gray-600">Analytics dashboard coming soon...</p>
-              </div>
+        <div className="container mx-auto px-6 py-12">
+          <div className="bg-white rounded-2xl shadow-sm border border-cro-plat-300 overflow-hidden">
+            <div className="p-8">
+              {activeTab === 'meeting' ? <MeetingBriefForm /> : <BDMeetingForm />}
             </div>
-          )}
-          {activeTab === 'settings' && (
-            <div className="max-w-4xl mx-auto p-6">
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Settings</h2>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">API Configuration</h3>
-                    <p className="text-sm text-gray-600">
-                      Configure your API keys in the backend .env file
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Model Settings</h3>
-                    <p className="text-sm text-gray-600">
-                      Current model: GPT-4 Turbo
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </main>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div className="container mx-auto px-6 py-12">
+          <div className="grid md:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={<Users className="h-6 w-6 text-cro-blue-700" />}
+              title="Attendee Research"
+              description="Deep dive into professional backgrounds and recent activities"
+              color="blue"
+            />
+            <FeatureCard
+              icon={<Briefcase className="h-6 w-6 text-cro-green-600" />}
+              title="Company Analysis"
+              description="Comprehensive insights into company strategy and initiatives"
+              color="green"
+            />
+            <FeatureCard
+              icon={<Sparkles className="h-6 w-6 text-cro-purple-700" />}
+              title="AI Recommendations"
+              description="Strategic talking points and meeting objectives"
+              color="purple"
+            />
+          </div>
+        </div>
       </div>
     </QueryClientProvider>
+  );
+}
+
+// Tab Button Component
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}
+
+function TabButton({ active, onClick, icon, label }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all
+        ${active 
+          ? 'bg-cro-blue-700 text-white shadow-sm' 
+          : 'bg-transparent text-cro-purple-700 hover:bg-cro-plat-100'
+        }
+      `}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+// Feature Card Component
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: 'blue' | 'green' | 'purple';
+}
+
+function FeatureCard({ icon, title, description, color }: FeatureCardProps) {
+  const bgColors = {
+    blue: 'bg-cro-blue-100',
+    green: 'bg-cro-green-100',
+    purple: 'bg-cro-plat-100'
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-cro-plat-300 p-6 hover:shadow-md transition-shadow">
+      <div className={`inline-flex p-3 ${bgColors[color]} rounded-xl mb-4`}>
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-cro-soft-black-700 mb-2">{title}</h3>
+      <p className="text-cro-purple-700">{description}</p>
+    </div>
   );
 }
 
