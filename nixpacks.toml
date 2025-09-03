@@ -1,0 +1,17 @@
+# nixpacks.toml
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm-9_x"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = [
+  "cd backend && npm install",
+  "cd frontend && npm install",
+  "cd frontend && npm run build",
+  "cd backend && npm run build"
+]
+
+[start]
+cmd = "node backend/dist/index.js"
