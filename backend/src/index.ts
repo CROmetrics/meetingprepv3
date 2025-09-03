@@ -18,20 +18,24 @@ const HOST = '0.0.0.0'; // Bind to all interfaces for Railway
 app.use(helmet());
 
 // CORS configuration
-app.use(cors({
-  origin: config.FRONTEND_URL,
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: config.FRONTEND_URL,
+    credentials: true,
+  })
+);
 
 // Compression
 app.use(compression());
 
 // Request logging
-app.use(morgan('combined', {
-  stream: {
-    write: (message: string) => logger.info(message.trim()),
-  },
-}));
+app.use(
+  morgan('combined', {
+    stream: {
+      write: (message: string) => logger.info(message.trim()),
+    },
+  })
+);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -49,13 +53,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api', routes);
 
 // Serve static files in production
-if (config.NODE_ENV === 'production') {
+if (config.NODE_ENV === 'production' || process.env.NODE_ENV === 'production') {
   // Serve frontend static files
-  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  // When compiled, __dirname is backend/dist, so we need to go up two levels
+  const frontendPath = path.join(__dirname, '..', '..', 'frontend', 'dist');
   app.use(express.static(frontendPath));
-  
+
   // Handle React Router - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
+  app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    // Serve index.html for all other routes
     res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
@@ -72,7 +82,7 @@ app.listen(PORT, HOST, () => {
   logger.info(`🤖 OpenAI Model: ${config.OPENAI_MODEL}`);
   logger.info(`📊 Structured Output: ${config.STRUCTURED_OUTPUT ? 'Enabled' : 'Disabled'}`);
   logger.info(`🔄 Self-Critique: ${config.SELF_CRITIQUE ? 'Enabled' : 'Disabled'}`);
-  
+
   // Check service configurations
   if (!config.SLACK_TOKEN) {
     logger.warn('⚠️  Slack token not configured - Slack features disabled');
