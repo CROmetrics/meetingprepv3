@@ -30,6 +30,15 @@ export interface BDMeetingRequest {
   additionalContext?: string;
 }
 
+export interface BDMeetingFormData {
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  notes: string;
+  dealId: string;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;

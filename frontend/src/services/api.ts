@@ -4,6 +4,7 @@ import {
   SlackChannel, 
   MeetingBriefRequest, 
   BDMeetingRequest,
+  BDMeetingFormData,
   Attendee,
   UsageLog 
 } from '../types';
@@ -13,7 +14,7 @@ class ApiService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+      baseURL: '/api', // Use relative path to leverage Vite proxy
       headers: {
         'Content-Type': 'application/json',
       },
@@ -37,10 +38,11 @@ class ApiService {
       (error) => {
         if (error.response) {
           // Server responded with error
-          throw new Error(error.response.data?.error || 'Server error occurred');
+          const errorMessage = error.response.data?.message || error.response.data?.error || 'Server error occurred';
+          throw new Error(errorMessage);
         } else if (error.request) {
           // No response received
-          throw new Error('No response from server');
+          throw new Error('No response from server. Please check if the server is running.');
         } else {
           // Request setup error
           throw new Error('Request failed: ' + error.message);
@@ -83,6 +85,28 @@ class ApiService {
 
   async generateBDReport(request: BDMeetingRequest): Promise<ApiResponse> {
     return this.client.post('/bd/generate', request);
+  }
+
+  async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse> {
+    // Transform the form data to match API expectations
+    const apiRequest: BDMeetingRequest = {
+      company: formData.company,
+      attendees: [
+        {
+          name: formData.name,
+          email: formData.email,
+          title: formData.role,
+          company: formData.company
+        }
+      ],
+      purpose: formData.notes || undefined,
+      additionalContext: formData.notes || undefined
+    };
+    return this.client.post('/bd/generate', apiRequest);
+  }
+
+  async searchHubspotDeals(query: string): Promise<ApiResponse> {
+    return this.client.get('/bd/search-deals', { params: { query } });
   }
 
   async addToHubSpot(attendees: Attendee[]): Promise<ApiResponse> {

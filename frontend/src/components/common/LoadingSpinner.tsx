@@ -21,9 +21,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
   return (
     <div className={clsx('flex flex-col items-center justify-center', className)}>
-      <Loader2 className={clsx('animate-spin text-blue-600', sizeClasses[size])} />
+      <Loader2 className={clsx('animate-spin text-cro-blue-700', sizeClasses[size])} />
       {message && (
-        <p className="mt-2 text-sm text-gray-600">{message}</p>
+        <p className="mt-2 text-sm text-cro-purple-700 font-medium">{message}</p>
       )}
     </div>
   );
