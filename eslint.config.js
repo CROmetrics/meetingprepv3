@@ -16,6 +16,30 @@ export default [
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
+      globals: {
+        // Node.js globals
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        alert: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        fetch: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly'
+      }
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
@@ -27,7 +51,12 @@ export default [
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }]
+      '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unsafe-function-type': 'warn',
+      'no-unused-expressions': 'off',
+      '@typescript-eslint/no-unused-expressions': 'warn'
     },
     settings: {
       react: {
@@ -36,6 +65,6 @@ export default [
     }
   },
   {
-    ignores: ['node_modules/', 'dist/', 'build/', '.next/', 'coverage/', '*.config.js', '*.config.ts']
+    ignores: ['node_modules/', 'dist/', 'build/', '.next/', 'coverage/', '*.config.js', '*.config.ts', 'backend/dist/', 'frontend/dist/']
   }
 ]

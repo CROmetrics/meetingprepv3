@@ -7,17 +7,28 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "express": "latest",
+    "@slack/web-api": "^7.10.0",
+    "axios": "^1.11.0",
+    "cheerio": "^1.1.2",
+    "compression": "^1.8.1",
     "cors": "latest",
     "dotenv": "latest",
-    "zod": "latest"
+    "express": "latest",
+    "express-rate-limit": "^8.0.1",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.1",
+    "openai": "^5.18.1",
+    "winston": "^3.17.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/express": "latest",
+    "@types/compression": "^1.8.1",
     "@types/cors": "latest",
+    "@types/express": "latest",
+    "@types/morgan": "^1.9.10",
     "@types/node": "latest",
-    "typescript": "latest",
     "nodemon": "latest",
-    "ts-node": "latest"
+    "ts-node": "latest",
+    "typescript": "latest"
   }
 }
