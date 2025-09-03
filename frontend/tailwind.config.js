@@ -1,20 +1,17 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['Montserrat', 'sans-serif'],
-        'montserrat': ['Montserrat', 'sans-serif'],
-        'caveat': ['Caveat', 'cursive'],
+        sans: ['Montserrat', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
+        caveat: ['Caveat', 'cursive'],
       },
       colors: {
-        'cro': {
+        cro: {
           // Blues
-          'blue': {
+          blue: {
             800: 'var(--cro-blue-800)',
             700: 'var(--cro-blue-700)',
             500: 'var(--cro-blue-500)',
@@ -23,7 +20,7 @@ export default {
             100: 'var(--cro-blue-100)',
           },
           // Greens
-          'green': {
+          green: {
             700: 'var(--cro-green-700)',
             600: 'var(--cro-green-600)',
             500: 'var(--cro-green-500)',
@@ -32,19 +29,19 @@ export default {
             100: 'var(--cro-green-100)',
           },
           // Purple
-          'purple': {
+          purple: {
             800: 'var(--cro-purple-800)',
             700: 'var(--cro-purple-700)',
             400: 'var(--cro-purple-400)',
           },
           // Platinum (neutrals)
-          'plat': {
+          plat: {
             400: 'var(--cro-plat-400)',
             300: 'var(--cro-plat-300)',
             100: 'var(--cro-plat-100)',
           },
           // Yellow
-          'yellow': {
+          yellow: {
             700: 'var(--cro-yellow-700)',
             600: 'var(--cro-yellow-600)',
             500: 'var(--cro-yellow-500)',
@@ -52,7 +49,7 @@ export default {
             100: 'var(--cro-yellow-100)',
           },
           // Red (errors/destructive only)
-          'red': {
+          red: {
             600: 'var(--cro-red-600)',
             500: 'var(--cro-red-500)',
             300: 'var(--cro-red-300)',
@@ -61,8 +58,8 @@ export default {
           'soft-black': {
             700: 'var(--cro-soft-black-700)',
           },
-          'white': 'var(--cro-white)',
-        }
+          white: 'var(--cro-white)',
+        },
       },
       borderRadius: {
         '2xl': '1.5rem',
@@ -70,8 +67,8 @@ export default {
       container: {
         center: true,
         padding: '2rem',
-      }
+      },
     },
   },
   plugins: [],
-}
+};
