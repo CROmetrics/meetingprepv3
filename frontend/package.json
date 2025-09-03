@@ -7,9 +7,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.1.12",
+    "axios": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "axios": "latest"
+    "react-dom": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
