@@ -30,13 +30,17 @@ export interface BDMeetingRequest {
   additionalContext?: string;
 }
 
+export interface AttendeeWithStatus extends Attendee {
+  id: string;
+  researchStatus: 'pending' | 'researching' | 'completed' | 'error';
+  hubspotStatus?: 'not_found' | 'found' | 'added';
+}
+
 export interface BDMeetingFormData {
-  name: string;
-  email: string;
   company: string;
-  role: string;
-  notes: string;
-  dealId: string;
+  purpose?: string;
+  additionalContext?: string;
+  attendees: AttendeeWithStatus[];
 }
 
 export interface ApiResponse<T = any> {

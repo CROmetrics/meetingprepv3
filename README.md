@@ -5,12 +5,14 @@ A comprehensive TypeScript application for generating executive meeting briefs u
 ## 🚀 Features
 
 ### Internal Meeting Briefs
+
 - Analyze Slack conversations with thread expansion
 - Enrich attendee data from HubSpot CRM
 - Generate strategic meeting briefs with AI
 - Customizable lookback periods and message limits
 
 ### Business Development Intelligence
+
 - Multi-phase attendee research workflow
 - LinkedIn profile discovery
 - Company and competitive landscape analysis
@@ -18,6 +20,7 @@ A comprehensive TypeScript application for generating executive meeting briefs u
 - Comprehensive intelligence reports with source citations
 
 ### Technical Highlights
+
 - **Full TypeScript** with strict mode for type safety
 - **React** frontend with Tailwind CSS
 - **Express** backend with clean architecture
@@ -52,6 +55,7 @@ A comprehensive TypeScript application for generating executive meeting briefs u
 ## 🛠️ Setup
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - API Keys: OpenAI, Slack, HubSpot (optional), Serper (optional)
@@ -59,38 +63,45 @@ A comprehensive TypeScript application for generating executive meeting briefs u
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd weeee
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm run install:all
 ```
 
 3. **Configure environment**
+
 ```bash
 cp .env.example .env
 # Edit .env with your API keys
 ```
 
 4. **Start development servers**
+
 ```bash
 npm run dev
 ```
 
 This starts:
+
 - Backend on http://localhost:3001
 - Frontend on http://localhost:5173
 
 ## 🔑 Environment Variables
 
 Required:
+
 - `OPENAI_API_KEY` - OpenAI API key for GPT-4
 - `SLACK_TOKEN` - Slack user or bot token
 
 Optional:
+
 - `HUBSPOT_TOKEN` - HubSpot private app token
 - `SERPER_API_KEY` - Serper API key for web search
 - `PORT` - Backend port (default: 3001)
@@ -101,27 +112,32 @@ See `.env.example` for all configuration options.
 ## 📚 API Documentation
 
 ### Internal Meeting Endpoints
+
 - `GET /api/channels` - List Slack channels
 - `POST /api/run` - Generate meeting brief
 
 ### BD Meeting Endpoints
+
 - `POST /api/bd/research-attendees` - Research attendees
 - `POST /api/bd/generate` - Generate intelligence report
 - `POST /api/bd/add-to-hubspot` - Add contacts to CRM
 
 ### Debug Endpoints
+
 - `GET /api/usage-logs` - View usage analytics
 - `GET /api/debug/openai-test` - Test OpenAI connection
 
 ## 🏗️ Architecture
 
 ### Backend Services
+
 - **SlackService** - Channel and message operations
 - **HubSpotService** - CRM contact management
 - **OpenAIService** - AI report generation with tool calling
 - **ResearchService** - Web search and scraping
 
 ### Frontend Components
+
 - **MeetingBriefForm** - Internal meeting configuration
 - **BDMeetingForm** - BD meeting setup
 - **React Query** - Data fetching and caching
@@ -130,6 +146,7 @@ See `.env.example` for all configuration options.
 ## 🔄 Migration from Python
 
 Successfully migrated from FastAPI/Python to Express/TypeScript with:
+
 - **100% feature parity** - All original functionality preserved
 - **Improved type safety** - Full TypeScript with Zod validation
 - **Better architecture** - Clean separation of concerns
@@ -139,6 +156,7 @@ Successfully migrated from FastAPI/Python to Express/TypeScript with:
 ## 📊 Usage Analytics
 
 The application tracks usage metrics for analysis:
+
 - API endpoint usage
 - Report generation statistics
 - Error tracking
@@ -185,4 +203,4 @@ Private - CroMetrics Internal Use Only
 
 - Original Python implementation by CroMetrics team
 - Refactored to TypeScript following CroMetrics development guidelines
-- Built with modern web technologies and best practices
+- Built with modern web technologies and best practices# Trigger Railway deployment - Thu Sep 4 09:17:44 MDT 2025
