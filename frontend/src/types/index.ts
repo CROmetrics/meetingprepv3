@@ -39,3 +39,36 @@ export interface UsageLog {
   clientIp: string;
   data: Record<string, unknown>;
 }
+
+export interface BDReportData {
+  report: {
+    executiveSummary: string;
+    targetCompanyIntelligence: string;
+    meetingAttendeeAnalysis: string;
+    strategicOpportunityAssessment: string;
+    meetingDynamicsStrategy: string;
+    keyQuestions: string[];
+    potentialObjectionsResponses: string;
+    confidence: number;
+  };
+  metadata: {
+    company: string;
+    attendeesCount: number;
+    sourcesCount: number;
+    generatedAt: string;
+  };
+}
+
+export interface BDResearchData {
+  attendees: Array<{
+    name: string;
+    title?: string;
+    company?: string;
+    email?: string;
+    linkedinUrl?: string;
+    hubspotData?: unknown;
+    linkedinSnippet?: string;
+    searchResults?: unknown[];
+  }>;
+  company: string;
+}

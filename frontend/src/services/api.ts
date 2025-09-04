@@ -1,5 +1,13 @@
 import axios, { AxiosInstance } from 'axios';
-import { ApiResponse, BDMeetingRequest, BDMeetingFormData, Attendee, UsageLog } from '../types';
+import {
+  ApiResponse,
+  BDMeetingRequest,
+  BDMeetingFormData,
+  Attendee,
+  UsageLog,
+  BDReportData,
+  BDResearchData,
+} from '../types';
 
 class ApiService {
   private client: AxiosInstance;
@@ -50,15 +58,15 @@ class ApiService {
   }
 
   // BD operations
-  async researchAttendees(request: BDMeetingRequest): Promise<ApiResponse> {
+  async researchAttendees(request: BDMeetingRequest): Promise<ApiResponse<BDResearchData>> {
     return this.client.post('/bd/research-attendees', request);
   }
 
-  async generateBDReport(request: BDMeetingRequest): Promise<ApiResponse> {
+  async generateBDReport(request: BDMeetingRequest): Promise<ApiResponse<BDReportData>> {
     return this.client.post('/bd/generate', request);
   }
 
-  async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse> {
+  async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse<BDReportData>> {
     // Transform the form data to match API expectations
     const apiRequest: BDMeetingRequest = {
       company: formData.company,

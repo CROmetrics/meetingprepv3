@@ -40,7 +40,7 @@ export default function BDMeetingForm() {
     mutationFn: (data: BDMeetingRequest) => api.researchAttendees(data),
     onSuccess: (response) => {
       // Update attendees with research status
-      const researchedAttendees = response.data.attendees || [];
+      const researchedAttendees = response.data?.attendees || [];
       setFormData((prev) => ({
         ...prev,
         attendees: prev.attendees.map((attendee) => {
@@ -466,7 +466,7 @@ export default function BDMeetingForm() {
               <div className="bg-cro-yellow-100 rounded-xl p-4">
                 <p className="text-sm text-cro-yellow-700 font-medium">Sources</p>
                 <p className="text-lg font-bold text-cro-soft-black-700">
-                  {generateMutation.data.data?.metadata?.sourcesCount || 0}
+                  {generateMutation.data?.data?.metadata?.sourcesCount || 0}
                 </p>
               </div>
             </div>
@@ -475,7 +475,9 @@ export default function BDMeetingForm() {
             <div className="bg-cro-plat-100 rounded-2xl p-6">
               <button
                 onClick={() => {
-                  const report = generateMutation.data.data.report;
+                  const report = generateMutation.data?.data?.report;
+                  if (!report) return;
+
                   const content =
                     `# BD Intelligence Report - ${formData.company}\n\n` +
                     `## Executive Summary\n${report.executiveSummary}\n\n` +
@@ -483,7 +485,7 @@ export default function BDMeetingForm() {
                     `## Meeting Attendee Analysis\n${report.meetingAttendeeAnalysis}\n\n` +
                     `## Strategic Opportunity Assessment\n${report.strategicOpportunityAssessment}\n\n` +
                     `## Meeting Dynamics Strategy\n${report.meetingDynamicsStrategy}\n\n` +
-                    `## Key Questions\n${report.keyQuestions.map((q: string) => `- ${q}`).join('\n')}\n\n` +
+                    `## Key Questions\n${report.keyQuestions?.map((q: string) => `- ${q}`).join('\n') || ''}\n\n` +
                     `## Potential Objections & Responses\n${report.potentialObjectionsResponses}`;
                   navigator.clipboard.writeText(content);
                   alert('Intelligence report copied to clipboard!');
@@ -493,7 +495,7 @@ export default function BDMeetingForm() {
                 Copy Report to Clipboard
               </button>
 
-              {generateMutation.data.data.report && (
+              {generateMutation.data?.data?.report && (
                 <div className="space-y-6">
                   {/* Executive Summary */}
                   <div>
@@ -503,7 +505,7 @@ export default function BDMeetingForm() {
                     <div className="prose prose-sm max-w-none">
                       <div className="text-cro-purple-700 leading-relaxed">
                         <ReactMarkdown>
-                          {generateMutation.data.data.report.executiveSummary}
+                          {generateMutation.data?.data?.report?.executiveSummary || ''}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -518,7 +520,7 @@ export default function BDMeetingForm() {
                     <div className="prose prose-sm max-w-none">
                       <div className="text-cro-purple-700 leading-relaxed">
                         <ReactMarkdown>
-                          {generateMutation.data.data.report.targetCompanyIntelligence}
+                          {generateMutation.data?.data?.report?.targetCompanyIntelligence}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -533,7 +535,7 @@ export default function BDMeetingForm() {
                     <div className="prose prose-sm max-w-none">
                       <div className="text-cro-purple-700 leading-relaxed">
                         <ReactMarkdown>
-                          {generateMutation.data.data.report.meetingAttendeeAnalysis}
+                          {generateMutation.data?.data?.report?.meetingAttendeeAnalysis}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -547,7 +549,7 @@ export default function BDMeetingForm() {
                     <div className="prose prose-sm max-w-none">
                       <div className="text-cro-purple-700 leading-relaxed">
                         <ReactMarkdown>
-                          {generateMutation.data.data.report.strategicOpportunityAssessment}
+                          {generateMutation.data?.data?.report?.strategicOpportunityAssessment}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -559,7 +561,7 @@ export default function BDMeetingForm() {
                       Key Questions to Ask
                     </h4>
                     <ul className="space-y-2">
-                      {generateMutation.data.data.report.keyQuestions?.map(
+                      {generateMutation.data?.data?.report?.keyQuestions?.map(
                         (question: string, index: number) => (
                           <li key={index} className="flex items-start">
                             <span className="text-cro-blue-600 mr-2">•</span>
@@ -578,7 +580,7 @@ export default function BDMeetingForm() {
                     <div className="prose prose-sm max-w-none">
                       <div className="text-cro-purple-700 leading-relaxed">
                         <ReactMarkdown>
-                          {generateMutation.data.data.report.meetingDynamicsStrategy}
+                          {generateMutation.data?.data?.report?.meetingDynamicsStrategy}
                         </ReactMarkdown>
                       </div>
                     </div>
@@ -595,12 +597,13 @@ export default function BDMeetingForm() {
                           <div
                             className="h-full bg-cro-green-500 rounded-full"
                             style={{
-                              width: `${(generateMutation.data.data.report.confidence || 0) * 100}%`,
+                              width: `${(generateMutation.data?.data?.report?.confidence || 0) * 100}%`,
                             }}
                           />
                         </div>
                         <span className="text-sm font-bold text-cro-soft-black-700">
-                          {Math.round((generateMutation.data.data.report.confidence || 0) * 100)}%
+                          {Math.round((generateMutation.data?.data?.report?.confidence || 0) * 100)}
+                          %
                         </span>
                       </div>
                     </div>

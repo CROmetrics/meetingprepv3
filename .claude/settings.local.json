@@ -12,7 +12,8 @@
       "WebFetch(domain:meetingprepv3-production.up.railway.app)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []
