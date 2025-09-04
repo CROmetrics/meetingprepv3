@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Users, Building2, Target, Plus, Trash2, Sparkles, Search, CheckCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
-import { BDMeetingRequest, Attendee, BDMeetingFormData, AttendeeWithStatus } from '../../types';
+import { BDMeetingRequest, Attendee, BDMeetingFormData } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -386,9 +386,11 @@ export default function BDMeetingForm() {
                   <div>
                     <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">Executive Summary</h4>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown className="text-cro-purple-700 leading-relaxed">
-                        {generateMutation.data.data.report.executiveSummary}
-                      </ReactMarkdown>
+                      <div className="text-cro-purple-700 leading-relaxed">
+                        <ReactMarkdown>
+                          {generateMutation.data.data.report.executiveSummary}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 
@@ -399,9 +401,11 @@ export default function BDMeetingForm() {
                       Target Company Intelligence
                     </h4>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown className="text-cro-purple-700 leading-relaxed">
-                        {generateMutation.data.data.report.targetCompanyIntelligence}
-                      </ReactMarkdown>
+                      <div className="text-cro-purple-700 leading-relaxed">
+                        <ReactMarkdown>
+                          {generateMutation.data.data.report.targetCompanyIntelligence}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 
@@ -412,9 +416,11 @@ export default function BDMeetingForm() {
                       Meeting Attendee Analysis
                     </h4>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown className="text-cro-purple-700 leading-relaxed">
-                        {generateMutation.data.data.report.meetingAttendeeAnalysis}
-                      </ReactMarkdown>
+                      <div className="text-cro-purple-700 leading-relaxed">
+                        <ReactMarkdown>
+                          {generateMutation.data.data.report.meetingAttendeeAnalysis}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 
@@ -422,9 +428,11 @@ export default function BDMeetingForm() {
                   <div>
                     <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">Strategic Opportunity Assessment</h4>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown className="text-cro-purple-700 leading-relaxed">
-                        {generateMutation.data.data.report.strategicOpportunityAssessment}
-                      </ReactMarkdown>
+                      <div className="text-cro-purple-700 leading-relaxed">
+                        <ReactMarkdown>
+                          {generateMutation.data.data.report.strategicOpportunityAssessment}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 
@@ -445,9 +453,11 @@ export default function BDMeetingForm() {
                   <div>
                     <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">Meeting Dynamics Strategy</h4>
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown className="text-cro-purple-700 leading-relaxed">
-                        {generateMutation.data.data.report.meetingDynamicsStrategy}
-                      </ReactMarkdown>
+                      <div className="text-cro-purple-700 leading-relaxed">
+                        <ReactMarkdown>
+                          {generateMutation.data.data.report.meetingDynamicsStrategy}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
 

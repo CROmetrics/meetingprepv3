@@ -88,19 +88,12 @@ class ApiService {
   }
 
   async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse> {
-    // Transform the form data to match API expectations
+    // Transform the form data to match API expectations  
     const apiRequest: BDMeetingRequest = {
       company: formData.company,
-      attendees: [
-        {
-          name: formData.name,
-          email: formData.email,
-          title: formData.role,
-          company: formData.company
-        }
-      ],
-      purpose: formData.notes || undefined,
-      additionalContext: formData.notes || undefined
+      attendees: formData.attendees.map(({ id, researchStatus, hubspotStatus, ...attendee }) => attendee),
+      purpose: formData.purpose,
+      additionalContext: formData.additionalContext
     };
     return this.client.post('/bd/generate', apiRequest);
   }
