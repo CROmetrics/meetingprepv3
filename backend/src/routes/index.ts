@@ -1,6 +1,4 @@
 import { Router } from 'express';
-import * as channelsController from '../controllers/channels.controller';
-import * as meetingController from '../controllers/meeting.controller';
 import * as bdController from '../controllers/bd.controller';
 import * as debugController from '../controllers/debug.controller';
 
@@ -14,13 +12,6 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-// Channel routes
-router.get('/channels', channelsController.listChannels);
-router.get('/channels/:channelId/messages', channelsController.getChannelMessages);
-
-// Meeting routes
-router.post('/run', meetingController.generateMeetingBrief);
 
 // BD routes
 router.post('/bd/research-attendees', bdController.researchAttendees);

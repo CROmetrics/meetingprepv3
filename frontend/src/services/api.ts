@@ -1,13 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { 
-  ApiResponse, 
-  SlackChannel, 
-  MeetingBriefRequest, 
-  BDMeetingRequest,
-  BDMeetingFormData,
-  Attendee,
-  UsageLog 
-} from '../types';
+import { ApiResponse, BDMeetingRequest, BDMeetingFormData, Attendee, UsageLog } from '../types';
 
 class ApiService {
   private client: AxiosInstance;
@@ -38,7 +30,8 @@ class ApiService {
       (error) => {
         if (error.response) {
           // Server responded with error
-          const errorMessage = error.response.data?.message || error.response.data?.error || 'Server error occurred';
+          const errorMessage =
+            error.response.data?.message || error.response.data?.error || 'Server error occurred';
           throw new Error(errorMessage);
         } else if (error.request) {
           // No response received
@@ -56,28 +49,6 @@ class ApiService {
     return this.client.get('/health');
   }
 
-  // Channel operations
-  async listChannels(limit?: number): Promise<ApiResponse<{ channels: SlackChannel[]; count: number }>> {
-    return this.client.get('/channels', { params: { limit } });
-  }
-
-  async getChannelMessages(
-    channelId: string,
-    options?: {
-      lookbackDays?: number;
-      maxMessages?: number;
-      resolveNames?: boolean;
-      expandThreads?: boolean;
-    }
-  ): Promise<ApiResponse> {
-    return this.client.get(`/channels/${channelId}/messages`, { params: options });
-  }
-
-  // Meeting operations
-  async generateMeetingBrief(request: MeetingBriefRequest): Promise<ApiResponse> {
-    return this.client.post('/run', request);
-  }
-
   // BD operations
   async researchAttendees(request: BDMeetingRequest): Promise<ApiResponse> {
     return this.client.post('/bd/research-attendees', request);
@@ -88,18 +59,21 @@ class ApiService {
   }
 
   async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse> {
-    // Transform the form data to match API expectations  
+    // Transform the form data to match API expectations
     const apiRequest: BDMeetingRequest = {
       company: formData.company,
-      attendees: formData.attendees.map(({ id, researchStatus, hubspotStatus, ...attendee }) => attendee),
+      attendees: formData.attendees.map(
+        ({
+          id: _id,
+          researchStatus: _researchStatus,
+          hubspotStatus: _hubspotStatus,
+          ...attendee
+        }) => attendee
+      ),
       purpose: formData.purpose,
-      additionalContext: formData.additionalContext
+      additionalContext: formData.additionalContext,
     };
     return this.client.post('/bd/generate', apiRequest);
-  }
-
-  async searchHubspotDeals(query: string): Promise<ApiResponse> {
-    return this.client.get('/bd/search-deals', { params: { query } });
   }
 
   async addToHubSpot(attendees: Attendee[]): Promise<ApiResponse> {
