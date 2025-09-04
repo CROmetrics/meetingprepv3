@@ -5,18 +5,26 @@ import hubspotService from '../services/hubspot.service';
 import openaiService from '../services/openai.service';
 import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { logUsage } from '../utils/logger';
-import { 
-  BDMeetingRequest, 
-  ResearchResult,
-  AttendeeResearch 
-} from '../types/bd.types';
+import { BDMeetingRequest, ResearchResult, AttendeeResearch } from '../types/bd.types';
+
+// Helper to convert empty strings to undefined
+const emptyToUndefined = z
+  .string()
+  .transform((val) => (val === '' ? undefined : val))
+  .optional();
 
 const attendeeSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  email: z.string().email().optional(),
-  title: z.string().optional(),
-  company: z.string().optional(),
-  linkedinUrl: z.string().url().optional(),
+  email: emptyToUndefined.refine(
+    (val) => !val || z.string().email().safeParse(val).success,
+    'Invalid email format'
+  ),
+  title: emptyToUndefined,
+  company: emptyToUndefined,
+  linkedinUrl: emptyToUndefined.refine(
+    (val) => !val || z.string().url().safeParse(val).success,
+    'Invalid URL format'
+  ),
 });
 
 const bdMeetingSchema = z.object({
@@ -36,10 +44,14 @@ export const researchAttendees = asyncHandler(async (req: Request, res: Response
   const data = validationResult.data as BDMeetingRequest;
 
   // Log usage
-  logUsage('research_attendees', {
-    company: data.company,
-    attendeesCount: data.attendees.length,
-  }, req.ip);
+  logUsage(
+    'research_attendees',
+    {
+      company: data.company,
+      attendeesCount: data.attendees.length,
+    },
+    req.ip
+  );
 
   const attendeeResearch: AttendeeResearch[] = [];
 
@@ -105,11 +117,15 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   const data = validationResult.data as BDMeetingRequest;
 
   // Log usage
-  logUsage('generate_bd_report', {
-    company: data.company,
-    attendeesCount: data.attendees.length,
-    hasPurpose: !!data.purpose,
-  }, req.ip);
+  logUsage(
+    'generate_bd_report',
+    {
+      company: data.company,
+      attendeesCount: data.attendees.length,
+      hasPurpose: !!data.purpose,
+    },
+    req.ip
+  );
 
   // Phase 1: Research attendees
   const attendeeResearch: AttendeeResearch[] = [];
@@ -134,7 +150,7 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
 
   // Phase 2: Company research
   const companyResearch = await researchService.researchCompany(data.company);
-  
+
   // Phase 3: Competitive landscape
   const competitiveLandscape = await researchService.researchCompetitiveLandscape(data.company);
 
@@ -144,15 +160,15 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
     companyResearch,
     competitiveLandscape,
     sources: [
-      ...companyResearch.overview.map(r => r.link),
-      ...companyResearch.recentNews.map(r => r.link),
-      ...competitiveLandscape.results.map(r => r.link),
+      ...companyResearch.overview.map((r) => r.link),
+      ...companyResearch.recentNews.map((r) => r.link),
+      ...competitiveLandscape.results.map((r) => r.link),
     ].filter(Boolean),
   };
 
   // Format research context for AI
   let researchContext = `**TARGET COMPANY:** ${data.company}\n\n`;
-  
+
   if (data.purpose) {
     researchContext += `**MEETING PURPOSE:** ${data.purpose}\n\n`;
   }
@@ -206,7 +222,7 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
 
 export const searchDeals = asyncHandler(async (req: Request, res: Response) => {
   const { query } = req.query;
-  
+
   if (!query || typeof query !== 'string') {
     throw new AppError(400, 'Query parameter is required', 'VALIDATION_ERROR');
   }
@@ -216,7 +232,7 @@ export const searchDeals = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const results = await hubspotService.searchDeals(query);
-  
+
   res.json({
     success: true,
     data: {
@@ -234,9 +250,13 @@ export const addToHubSpot = asyncHandler(async (req: Request, res: Response) => 
   }
 
   // Log usage
-  logUsage('add_to_hubspot', {
-    attendeesCount: attendees.length,
-  }, req.ip);
+  logUsage(
+    'add_to_hubspot',
+    {
+      attendeesCount: attendees.length,
+    },
+    req.ip
+  );
 
   const results = [];
 
@@ -244,7 +264,7 @@ export const addToHubSpot = asyncHandler(async (req: Request, res: Response) => 
     try {
       const validatedAttendee = attendeeSchema.parse(attendee);
       const contact = await hubspotService.createContact(validatedAttendee);
-      
+
       results.push({
         success: true,
         attendee: validatedAttendee.name,
@@ -265,7 +285,7 @@ export const addToHubSpot = asyncHandler(async (req: Request, res: Response) => 
     data: {
       results,
       totalProcessed: attendees.length,
-      successCount: results.filter(r => r.success).length,
+      successCount: results.filter((r) => r.success).length,
     },
   });
 });
