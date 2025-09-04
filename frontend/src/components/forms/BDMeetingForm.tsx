@@ -331,12 +331,34 @@ export default function BDMeetingForm() {
               </div>
             </div>
 
-            {/* HubSpot Update Status */}
-            {generateMutation.data.data.hubspotUpdated && (
-              <div className="mt-4 p-4 bg-cro-green-100 rounded-xl">
-                <p className="text-cro-green-700 font-medium">
-                  ✓ HubSpot deal has been updated with meeting notes
+            {/* Add to HubSpot Section */}
+            {formData.attendees.some(a => a.hubspotStatus === 'not_found') && (
+              <div className="mt-6 p-4 bg-cro-yellow-50 rounded-xl border border-cro-yellow-200">
+                <h4 className="text-lg font-medium text-cro-yellow-800 mb-3">Add Contacts to HubSpot</h4>
+                <p className="text-sm text-cro-yellow-700 mb-3">
+                  Some attendees were not found in HubSpot. Would you like to add them?
                 </p>
+                <button
+                  onClick={() => {
+                    const attendeesToAdd = formData.attendees
+                      .filter(a => a.hubspotStatus === 'not_found')
+                      .map(({ id, researchStatus, hubspotStatus, ...attendee }) => attendee);
+                    api.addToHubSpot(attendeesToAdd)
+                      .then(() => {
+                        alert('Contacts added to HubSpot successfully!');
+                        setFormData(prev => ({
+                          ...prev,
+                          attendees: prev.attendees.map(a => 
+                            a.hubspotStatus === 'not_found' ? { ...a, hubspotStatus: 'added' } : a
+                          )
+                        }));
+                      })
+                      .catch(error => alert('Failed to add contacts: ' + error.message));
+                  }}
+                  className="px-4 py-2 bg-cro-yellow-600 text-white rounded-xl hover:bg-cro-yellow-700 transition-colors text-sm font-medium"
+                >
+                  Add to HubSpot
+                </button>
               </div>
             )}
           </div>
