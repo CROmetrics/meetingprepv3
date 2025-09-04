@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Users, Building2, Target, Plus, Trash2, Sparkles, Search, CheckCircle } from 'lucide-react';
 import { clsx } from 'clsx';
