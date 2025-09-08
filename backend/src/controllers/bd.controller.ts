@@ -203,7 +203,24 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   }
 
   // Generate intelligence report
-  const report = await openaiService.generateBDIntelligenceReport(researchContext, true);
+  const rawReport = await openaiService.generateBDIntelligenceReport(researchContext, true);
+  
+  // Convert string report to structured format expected by frontend
+  const report = {
+    executiveSummary: typeof rawReport === 'string' ? rawReport : (rawReport.executiveSummary || ''),
+    targetCompanyIntelligence: typeof rawReport === 'string' ? '' : (rawReport.targetCompanyIntelligence || ''),
+    meetingAttendeeAnalysis: typeof rawReport === 'string' ? '' : (rawReport.meetingAttendeeAnalysis || ''),
+    strategicOpportunityAssessment: typeof rawReport === 'string' ? '' : (rawReport.strategicOpportunityAssessment || ''),
+    meetingDynamicsStrategy: typeof rawReport === 'string' ? '' : (rawReport.meetingDynamicsStrategy || ''),
+    keyQuestions: typeof rawReport === 'string' ? [] : (rawReport.keyQuestions || []),
+    potentialObjectionsResponses: typeof rawReport === 'string' ? '' : (rawReport.potentialObjectionsResponses || ''),
+    confidence: typeof rawReport === 'string' ? 85 : (rawReport.confidence || 85),
+  };
+
+  // If we got a string report, put the full content in executiveSummary for now
+  if (typeof rawReport === 'string') {
+    report.executiveSummary = rawReport;
+  }
 
   res.json({
     success: true,
