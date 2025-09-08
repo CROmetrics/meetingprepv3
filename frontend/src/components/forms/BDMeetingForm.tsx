@@ -50,7 +50,12 @@ export default function BDMeetingForm() {
           
           // Auto-populate from HubSpot data if found
           if (researched?.hubspotData) {
-            const hubspotData = researched.hubspotData;
+            const hubspotData = researched.hubspotData as {
+              email?: string;
+              jobtitle?: string;
+              company?: string;
+              linkedin_url?: string;
+            };
             return {
               ...attendee,
               email: attendee.email || hubspotData.email || '',
