@@ -39,7 +39,7 @@ export default function BDMeetingForm() {
   const researchMutation = useMutation({
     mutationFn: (data: BDMeetingRequest) => api.researchAttendees(data),
     onSuccess: (response) => {
-      // Update attendees with research status
+      // Update attendees with research status and auto-populate HubSpot data
       const researchedAttendees = response.data?.attendees || [];
       setFormData((prev) => ({
         ...prev,
@@ -47,10 +47,26 @@ export default function BDMeetingForm() {
           const researched = researchedAttendees.find(
             (r: unknown) => (r as { name: string }).name === attendee.name
           );
+          
+          // Auto-populate from HubSpot data if found
+          if (researched?.hubspotData) {
+            const hubspotData = researched.hubspotData;
+            return {
+              ...attendee,
+              email: attendee.email || hubspotData.email || '',
+              title: attendee.title || hubspotData.jobtitle || '',
+              company: attendee.company || hubspotData.company || '',
+              linkedinUrl: attendee.linkedinUrl || hubspotData.linkedin_url || researched.linkedinUrl || '',
+              researchStatus: 'completed' as const,
+              hubspotStatus: 'found' as const,
+            };
+          }
+          
           return {
             ...attendee,
+            linkedinUrl: attendee.linkedinUrl || researched?.linkedinUrl || '',
             researchStatus: 'completed' as const,
-            hubspotStatus: researched?.hubspotData ? 'found' : 'not_found',
+            hubspotStatus: 'not_found' as const,
           };
         }),
       }));
@@ -210,6 +226,50 @@ export default function BDMeetingForm() {
             </button>
           </div>
 
+          {/* Step 1: Research Attendees Button */}
+          <div className="mb-4 p-4 bg-gradient-to-r from-cro-purple-50 to-cro-blue-50 rounded-2xl border-2 border-cro-purple-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-cro-purple-700 mb-1">
+                  Step 1: Research Attendees
+                </h4>
+                <p className="text-xs text-cro-soft-black-600">
+                  Fill in attendee names below, then click research to auto-populate their information from HubSpot and the web
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleResearchAttendees}
+                disabled={!canResearch || researchMutation.isPending}
+                className={clsx(
+                  'flex items-center px-4 py-2 rounded-xl font-medium text-white transition-all',
+                  'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
+                  !canResearch || researchMutation.isPending
+                    ? 'bg-cro-plat-300 cursor-not-allowed'
+                    : 'bg-cro-purple-600 hover:bg-cro-purple-700 focus:ring-cro-purple-700 animate-pulse'
+                )}
+              >
+                {researchMutation.isPending ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span className="ml-2">Researching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4 mr-2" />
+                    Research Attendees
+                  </>
+                )}
+              </button>
+            </div>
+            {hasResearchedAttendees && (
+              <div className="mt-2 flex items-center text-xs text-cro-green-700">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Research complete! HubSpot data has been auto-populated where available.
+              </div>
+            )}
+          </div>
+
           <div className="space-y-4">
             {formData.attendees.map((attendee, index) => (
               <div
@@ -363,57 +423,44 @@ export default function BDMeetingForm() {
           />
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={handleResearchAttendees}
-            disabled={!canResearch || researchMutation.isPending}
-            className={clsx(
-              'flex-1 flex items-center justify-center px-6 py-3 rounded-2xl font-medium text-white transition-all',
-              'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
-              !canResearch || researchMutation.isPending
-                ? 'bg-cro-plat-300 cursor-not-allowed'
-                : 'bg-cro-purple-600 hover:bg-cro-purple-700 focus:ring-cro-purple-700'
-            )}
-          >
-            {researchMutation.isPending ? (
-              <>
-                <LoadingSpinner size="sm" />
-                <span className="ml-2">Researching...</span>
-              </>
-            ) : (
-              <>
-                <Search className="w-5 h-5 mr-2" />
-                Research Attendees
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleGenerateReport}
-            disabled={!canGenerateReport || generateMutation.isPending}
-            className={clsx(
-              'flex-1 flex items-center justify-center px-6 py-3 rounded-2xl font-medium text-white transition-all',
-              'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cro-blue-700',
-              !canGenerateReport || generateMutation.isPending
-                ? 'bg-cro-plat-300 cursor-not-allowed'
-                : 'bg-cro-blue-700 hover:bg-cro-blue-800'
-            )}
-          >
-            {generateMutation.isPending ? (
-              <>
-                <LoadingSpinner size="sm" />
-                <span className="ml-2">Generating Report...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-5 h-5 mr-2" />
-                Generate Intelligence Report
-              </>
-            )}
-          </button>
+        {/* Step 2: Generate Report */}
+        <div className="mb-4 p-4 bg-gradient-to-r from-cro-blue-50 to-cro-green-50 rounded-2xl border-2 border-cro-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-cro-blue-700 mb-1">
+                Step 2: Generate Intelligence Report
+              </h4>
+              <p className="text-xs text-cro-soft-black-600">
+                {canGenerateReport 
+                  ? "All attendees researched! Click to generate your BD intelligence report."
+                  : "Complete attendee research first before generating the report."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateReport}
+              disabled={!canGenerateReport || generateMutation.isPending}
+              className={clsx(
+                'flex items-center px-4 py-2 rounded-xl font-medium text-white transition-all',
+                'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cro-blue-700',
+                !canGenerateReport || generateMutation.isPending
+                  ? 'bg-cro-plat-300 cursor-not-allowed'
+                  : 'bg-cro-blue-700 hover:bg-cro-blue-800'
+              )}
+            >
+              {generateMutation.isPending ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  <span className="ml-2">Generating...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Report
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {hasResearchedAttendees && !canGenerateReport && (

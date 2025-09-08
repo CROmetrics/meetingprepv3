@@ -63,7 +63,10 @@ class ApiService {
   }
 
   async generateBDReport(request: BDMeetingRequest): Promise<ApiResponse<BDReportData>> {
-    return this.client.post('/bd/generate', request);
+    // Generate report can take longer due to multiple API calls
+    return this.client.post('/bd/generate', request, {
+      timeout: 180000, // 3 minutes for report generation
+    });
   }
 
   async generateBDPrep(formData: BDMeetingFormData): Promise<ApiResponse<BDReportData>> {
@@ -81,7 +84,9 @@ class ApiService {
       purpose: formData.purpose,
       additionalContext: formData.additionalContext,
     };
-    return this.client.post('/bd/generate', apiRequest);
+    return this.client.post('/bd/generate', apiRequest, {
+      timeout: 180000, // 3 minutes for report generation
+    });
   }
 
   async addToHubSpot(attendees: Attendee[]): Promise<ApiResponse> {
