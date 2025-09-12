@@ -98,4 +98,10 @@ app.listen(PORT, HOST, () => {
   if (!config.SERPER_API_KEY) {
     logger.warn('⚠️  Serper API key not configured - Web search disabled');
   }
+  if (!config.GOOGLE_CLIENT_ID) {
+    logger.warn('⚠️  Google Calendar not configured - Calendar features disabled');
+  }
+  if (!config.PEOPLEDATALABS_API_KEY) {
+    logger.warn('⚠️  People Data Labs not configured - Profile enrichment disabled');
+  }
 });
