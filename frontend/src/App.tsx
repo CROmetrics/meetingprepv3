@@ -1,7 +1,8 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import BDMeetingForm from './components/forms/BDMeetingForm';
+import { MainTabs } from './components/common/MainTabs';
 import { Briefcase, Sparkles } from 'lucide-react';
+import { CalendarIcon } from '@heroicons/react/24/outline';
 
 const queryClient = new QueryClient();
 
@@ -16,7 +17,7 @@ function App() {
               <div className="flex items-center space-x-2">
                 <Briefcase className="h-8 w-8 text-cro-blue-700" />
                 <h1 className="text-2xl font-bold text-cro-soft-black-700">
-                  BD Meeting Intelligence
+                  Meeting Prepper
                 </h1>
               </div>
             </div>
@@ -31,11 +32,11 @@ function App() {
                 AI-Powered Intelligence
               </span>
               <h2 className="text-4xl font-bold text-cro-soft-black-700 mb-4">
-                Business Development Meeting Preparation
+                Executive Meeting Preparation
               </h2>
               <p className="text-lg text-cro-purple-700 leading-relaxed">
-                Research attendees, analyze companies, and generate comprehensive intelligence
-                reports for your business development meetings.
+                Connect your calendar, research attendees, and generate comprehensive intelligence
+                reports for your meetings. Optimized for mobile executives.
               </p>
             </div>
           </div>
@@ -43,32 +44,28 @@ function App() {
 
         {/* Main Content */}
         <div className="container mx-auto px-6 py-12">
-          <div className="bg-white rounded-2xl shadow-sm border border-cro-plat-300 overflow-hidden">
-            <div className="p-8">
-              <BDMeetingForm />
-            </div>
-          </div>
+          <MainTabs />
         </div>
 
         {/* Features Section */}
         <div className="container mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-6">
             <FeatureCard
-              icon={<Briefcase className="h-6 w-6 text-cro-blue-700" />}
-              title="Prospect Research"
-              description="Deep dive into attendee backgrounds, LinkedIn profiles, and professional history"
+              icon={<CalendarIcon className="h-6 w-6 text-cro-blue-700" />}
+              title="Calendar Integration"
+              description="Connect Google Calendar to automatically research meeting attendees and generate mobile-optimized briefs"
               color="blue"
             />
             <FeatureCard
               icon={<Sparkles className="h-6 w-6 text-cro-green-600" />}
-              title="Company Intelligence"
-              description="Comprehensive analysis of target companies and competitive landscape"
+              title="AI-Powered Research"
+              description="LinkedIn profiles, company insights, and People Data Labs enrichment for comprehensive attendee intelligence"
               color="green"
             />
             <FeatureCard
               icon={<Briefcase className="h-6 w-6 text-cro-purple-700" />}
-              title="HubSpot Integration"
-              description="Automatic contact management and CRM synchronization"
+              title="Mobile Executive Brief"
+              description="Executive briefings optimized for mobile viewing with collapsible sections and key insights"
               color="purple"
             />
           </div>

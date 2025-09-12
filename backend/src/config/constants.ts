@@ -3,6 +3,9 @@ export const CONSTANTS = {
   SLACK_API_BASE: 'https://slack.com/api',
   HUBSPOT_API_BASE: 'https://api.hubapi.com',
   SERPER_API_BASE: 'https://google.serper.dev',
+  GOOGLE_CALENDAR_API_BASE: 'https://www.googleapis.com/calendar/v3',
+  GOOGLE_OAUTH_BASE: 'https://oauth2.googleapis.com',
+  PEOPLEDATALABS_API_BASE: 'https://api.peopledatalabs.com/v5',
 
   // Current year for research queries
   CURRENT_YEAR: new Date().getFullYear(),
@@ -27,6 +30,43 @@ export const CONSTANTS = {
       'lifecyclestage',
       'linkedin_url',
       'hs_object_id',
+    ],
+    COMPANY_PROPERTIES: [
+      'name',
+      'domain',
+      'industry',
+      'city',
+      'state',
+      'country',
+      'numberofemployees',
+      'annualrevenue',
+      'linkedincompanypage',
+    ],
+  },
+
+  // Google Calendar Configuration
+  GOOGLE_CALENDAR: {
+    SCOPES: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar.events.readonly'
+    ],
+    MAX_EVENTS: 50,
+    DEFAULT_LOOKBACK_DAYS: 7,
+    DEFAULT_LOOKAHEAD_DAYS: 30,
+  },
+
+  // People Data Labs Configuration
+  PEOPLEDATALABS: {
+    MAX_REQUESTS_PER_MINUTE: 100,
+    ENRICHMENT_FIELDS: [
+      'emails',
+      'phone_numbers', 
+      'profiles',
+      'job_history',
+      'education',
+      'certifications',
+      'skills',
+      'interests'
     ],
   },
 

@@ -22,6 +22,14 @@ const envSchema = z.object({
   // Serper API Configuration
   SERPER_API_KEY: z.string().optional(),
 
+  // Google Calendar API Configuration
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3001/api/auth/google/callback'),
+
+  // People Data Labs API Configuration
+  PEOPLEDATALABS_API_KEY: z.string().optional(),
+
   // Server Configuration
   PORT: z.string().default('3001').transform(Number),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

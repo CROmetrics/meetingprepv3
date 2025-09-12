@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as bdController from '../controllers/bd.controller';
 import * as debugController from '../controllers/debug.controller';
+import calendarRoutes from './calendar.routes';
 
 const router = Router();
 
@@ -12,6 +13,9 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Calendar routes
+router.use('/calendar', calendarRoutes);
 
 // BD routes
 router.post('/bd/research-attendees', bdController.researchAttendees);
