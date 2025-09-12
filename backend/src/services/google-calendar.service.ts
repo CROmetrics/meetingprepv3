@@ -96,20 +96,15 @@ class GoogleCalendarService {
     const client = this.ensureClient();
     
     try {
-      const response = await new Promise<any>((resolve, reject) => {
-        client.getAccessToken(code, (err: any, tokens: any) => {
-          if (err) reject(err);
-          else resolve(tokens);
-        });
-      });
+      const { tokens } = await client.getAccessToken(code);
       
-      client.setCredentials(response);
+      client.setCredentials(tokens);
       
       logger.info('Successfully obtained Google Calendar access tokens');
       
       return {
-        access_token: response.access_token!,
-        refresh_token: response.refresh_token
+        access_token: tokens.access_token!,
+        refresh_token: tokens.refresh_token || undefined
       };
     } catch (error) {
       logger.error('Failed to exchange authorization code for tokens:', error);
