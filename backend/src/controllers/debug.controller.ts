@@ -144,3 +144,37 @@ export const previewPrompt = asyncHandler(async (req: Request, res: Response) =>
     },
   });
 });
+
+export const testCompanySearch = asyncHandler(async (req: Request, res: Response) => {
+  const { query } = req.query;
+
+  if (!query || typeof query !== 'string') {
+    throw new AppError(400, 'Query parameter is required');
+  }
+
+  try {
+    if (!hubspotService.isConfigured()) {
+      return res.json({
+        success: false,
+        error: 'HubSpot is not configured',
+        configured: false,
+      });
+    }
+
+    const companies = await hubspotService.searchCompanies(query);
+    
+    return res.json({
+      success: true,
+      configured: true,
+      query,
+      found: companies.length,
+      data: companies,
+    });
+  } catch (error) {
+    return res.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      query,
+    });
+  }
+});

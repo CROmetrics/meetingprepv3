@@ -324,35 +324,85 @@ class HubSpotService {
     const client = this.ensureClient();
     
     try {
-      const response = await client.post('/crm/v3/objects/companies/search', {
-        filterGroups: [
-          {
-            filters: [
-              {
-                propertyName: 'domain',
-                operator: 'CONTAINS_TOKEN',
-                value: query,
-              },
-            ],
-          },
-          {
-            filters: [
-              {
-                propertyName: 'name',
-                operator: 'CONTAINS_TOKEN',
-                value: query,
-              },
-            ],
-          },
-        ],
-        properties: CONSTANTS.HUBSPOT.COMPANY_PROPERTIES,
-        limit: 20,
-      });
+      // Try multiple search strategies for better results
+      const searchMethods = [
+        // 1. Exact and partial name matches
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'name',
+                  operator: 'CONTAINS_TOKEN',
+                  value: query,
+                },
+              ],
+            },
+          ],
+        },
+        // 2. Domain-based search
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'domain',
+                  operator: 'CONTAINS_TOKEN',
+                  value: query,
+                },
+              ],
+            },
+          ],
+        },
+        // 3. Additional search using EQ for exact matches
+        {
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'name',
+                  operator: 'EQ',
+                  value: query,
+                },
+              ],
+            },
+          ],
+        },
+      ];
 
-      return response.data.results?.map((result: any) => ({
-        ...result.properties,
-        id: result.id,
-      })) || [];
+      const allResults = new Set();
+      
+      // Try each search method
+      for (const searchMethod of searchMethods) {
+        try {
+          const response = await client.post('/crm/v3/objects/companies/search', {
+            ...searchMethod,
+            properties: CONSTANTS.HUBSPOT.COMPANY_PROPERTIES,
+            limit: 20,
+          });
+
+          if (response.data.results) {
+            response.data.results.forEach((result: any) => {
+              const company = {
+                ...result.properties,
+                id: result.id,
+              };
+              // Use Set to avoid duplicates based on company ID
+              allResults.add(JSON.stringify(company));
+            });
+          }
+        } catch (methodError) {
+          logger.warn(`Search method failed for "${query}":`, methodError);
+          // Continue with other methods
+        }
+      }
+
+      // Convert Set back to array and parse JSON
+      const uniqueResults = Array.from(allResults).map((item: any) => JSON.parse(item));
+      
+      logger.info(`Found ${uniqueResults.length} companies for query "${query}"`);
+      return uniqueResults;
+      
     } catch (error) {
       logger.error(`Error searching HubSpot companies for "${query}":`, error);
       return [];

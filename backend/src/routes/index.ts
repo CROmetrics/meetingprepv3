@@ -38,5 +38,6 @@ router.get('/usage-logs', debugController.getUsageLogs);
 router.get('/debug/hubspot/:contactId', debugController.getHubSpotContact);
 router.get('/debug/openai-test', debugController.testOpenAI);
 router.post('/debug/prompt-preview', debugController.previewPrompt);
+router.get('/debug/company-search', debugController.testCompanySearch);
 
 export default router;
