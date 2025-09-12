@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   ChevronDownIcon, 
   ChevronUpIcon,
@@ -285,14 +285,14 @@ export function CompanyDataPreview({
                 {expandedSections.deals && (
                   <div className="p-4 border-t border-cro-yellow-200 space-y-3">
                     {insights.recentDeals.map((deal, index) => (
-                      <div key={deal.properties?.hs_object_id || index} className="bg-white rounded border border-cro-plat-200 p-3">
+                      <div key={(deal as any).properties?.hs_object_id || index} className="bg-white rounded border border-cro-plat-200 p-3">
                         <div className="font-medium text-cro-soft-black-700">
-                          {deal.properties?.dealname || 'Unnamed Deal'}
+                          {(deal as any).properties?.dealname || 'Unnamed Deal'}
                         </div>
                         <div className="text-sm text-cro-soft-black-600 mt-1 space-y-1">
-                          <div>Amount: {deal.properties?.amount || 'N/A'}</div>
-                          <div>Stage: {deal.properties?.dealstage || 'N/A'}</div>
-                          <div>Close Date: {deal.properties?.closedate || 'N/A'}</div>
+                          <div>Amount: {(deal as any).properties?.amount || 'N/A'}</div>
+                          <div>Stage: {(deal as any).properties?.dealstage || 'N/A'}</div>
+                          <div>Close Date: {(deal as any).properties?.closedate || 'N/A'}</div>
                         </div>
                       </div>
                     ))}

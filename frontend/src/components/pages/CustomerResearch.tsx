@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CompanySearchForm } from '../forms/CompanySearchForm';
 import { PromptEditor } from '../forms/PromptEditor';
 import { CompanyDataPreview } from '../common/CompanyDataPreview';

@@ -65,7 +65,7 @@ class CalendarApiService {
 
   private async makeRequest<T>(
     endpoint: string, 
-    options: Record<string, unknown> = {}
+    options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     
@@ -73,7 +73,7 @@ class CalendarApiService {
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
-          ...options.headers,
+          ...(options.headers as Record<string, string>),
         },
         ...options,
       });

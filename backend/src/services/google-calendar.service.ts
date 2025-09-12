@@ -96,13 +96,16 @@ class GoogleCalendarService {
     const client = this.ensureClient();
     
     try {
-      const response = await new Promise<any>((resolve, reject) => {
-        client.getAccessToken(code, (err: any, tokens: any) => {
-          if (err) reject(err);
-          else resolve({ tokens });
+      // Use promisify to convert callback to Promise
+      const { tokens } = await new Promise<{ tokens: any }>((resolve, reject) => {
+        (client as any).getAccessToken(code, (err: any, tokens: any) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve({ tokens });
+          }
         });
       });
-      const tokens = response.tokens;
       
       client.setCredentials(tokens);
       
