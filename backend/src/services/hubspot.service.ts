@@ -324,10 +324,12 @@ class HubSpotService {
     const client = this.ensureClient();
     
     try {
+      logger.info(`Starting company search for query: "${query}"`);
+      
       // Try multiple search strategies for better results
       const searchMethods = [
-        // 1. Exact and partial name matches
         {
+          name: 'NAME_CONTAINS_TOKEN',
           filterGroups: [
             {
               filters: [
@@ -340,8 +342,8 @@ class HubSpotService {
             },
           ],
         },
-        // 2. Domain-based search
         {
+          name: 'DOMAIN_CONTAINS_TOKEN', 
           filterGroups: [
             {
               filters: [
@@ -354,8 +356,8 @@ class HubSpotService {
             },
           ],
         },
-        // 3. Additional search using EQ for exact matches
         {
+          name: 'NAME_EQ',
           filterGroups: [
             {
               filters: [
@@ -368,6 +370,34 @@ class HubSpotService {
             },
           ],
         },
+        {
+          name: 'NAME_CONTAINS_TOKEN_LOWERCASE',
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'name',
+                  operator: 'CONTAINS_TOKEN',
+                  value: query.toLowerCase(),
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: 'NAME_CONTAINS_TOKEN_UPPERCASE',
+          filterGroups: [
+            {
+              filters: [
+                {
+                  propertyName: 'name',
+                  operator: 'CONTAINS_TOKEN',
+                  value: query.toUpperCase(),
+                },
+              ],
+            },
+          ],
+        },
       ];
 
       const allResults = new Set();
@@ -375,32 +405,85 @@ class HubSpotService {
       // Try each search method
       for (const searchMethod of searchMethods) {
         try {
-          const response = await client.post('/crm/v3/objects/companies/search', {
+          logger.info(`Trying search method: ${searchMethod.name} for query "${query}"`);
+          
+          const searchPayload = {
             ...searchMethod,
             properties: CONSTANTS.HUBSPOT.COMPANY_PROPERTIES,
-            limit: 20,
-          });
+            limit: 100, // Increase limit to get more results
+          };
+          
+          logger.info(`Search payload:`, JSON.stringify(searchPayload, null, 2));
+          
+          const response = await client.post('/crm/v3/objects/companies/search', searchPayload);
 
-          if (response.data.results) {
+          logger.info(`Response status: ${response.status}, Results count: ${response.data.results?.length || 0}`);
+          
+          if (response.data.results && response.data.results.length > 0) {
+            logger.info(`Found ${response.data.results.length} results with method ${searchMethod.name}`);
+            
             response.data.results.forEach((result: any) => {
               const company = {
                 ...result.properties,
                 id: result.id,
               };
-              // Use Set to avoid duplicates based on company ID
+              logger.info(`Found company: ID=${result.id}, Name="${result.properties?.name}", Domain="${result.properties?.domain}"`);
               allResults.add(JSON.stringify(company));
             });
+          } else {
+            logger.info(`No results found with method ${searchMethod.name}`);
           }
-        } catch (methodError) {
-          logger.warn(`Search method failed for "${query}":`, methodError);
-          // Continue with other methods
+        } catch (methodError: any) {
+          logger.error(`Search method ${searchMethod.name} failed for "${query}":`, {
+            message: methodError.message,
+            status: methodError.response?.status,
+            data: methodError.response?.data
+          });
         }
       }
 
       // Convert Set back to array and parse JSON
       const uniqueResults = Array.from(allResults).map((item: any) => JSON.parse(item));
       
-      logger.info(`Found ${uniqueResults.length} companies for query "${query}"`);
+      logger.info(`Final result: Found ${uniqueResults.length} unique companies for query "${query}"`);
+      
+      if (uniqueResults.length === 0) {
+        // Try one more fallback: get all companies and filter locally (for debugging)
+        try {
+          logger.info('Trying fallback: fetching recent companies to check data availability');
+          const fallbackResponse = await client.get('/crm/v3/objects/companies', {
+            params: {
+              limit: 100,
+              properties: CONSTANTS.HUBSPOT.COMPANY_PROPERTIES.join(','),
+            }
+          });
+          
+          logger.info(`Fallback: Retrieved ${fallbackResponse.data.results?.length || 0} companies from HubSpot`);
+          
+          if (fallbackResponse.data.results) {
+            const matchingCompanies = fallbackResponse.data.results.filter((company: any) => {
+              const name = company.properties?.name?.toLowerCase() || '';
+              const queryLower = query.toLowerCase();
+              const matches = name.includes(queryLower);
+              if (matches) {
+                logger.info(`Fallback match found: ${company.properties?.name} (ID: ${company.id})`);
+              }
+              return matches;
+            });
+            
+            if (matchingCompanies.length > 0) {
+              logger.info(`Fallback found ${matchingCompanies.length} matching companies`);
+              return matchingCompanies.map((result: any) => ({
+                ...result.properties,
+                id: result.id,
+              }));
+            }
+          }
+        } catch (fallbackError) {
+          logger.error('Fallback search failed:', fallbackError);
+        }
+      }
+      
       return uniqueResults;
       
     } catch (error) {
