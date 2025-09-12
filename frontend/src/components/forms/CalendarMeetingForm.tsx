@@ -41,7 +41,7 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [authUrl, setAuthUrl] = useState('');
+  const [, setAuthUrl] = useState('');
 
   // Options
   const [includePDL, setIncludePDL] = useState(true);

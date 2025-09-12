@@ -1,4 +1,10 @@
-import { ApiError } from './api';
+// Simple ApiError class for calendar service
+class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
 
 export interface CalendarEvent {
   id: string;
