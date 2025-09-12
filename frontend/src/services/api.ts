@@ -105,7 +105,7 @@ class ApiService {
     return this.client.get('/debug/openai-test');
   }
 
-  async previewPrompt(type: string, context: any): Promise<ApiResponse> {
+  async previewPrompt(type: string, context: Record<string, unknown>): Promise<ApiResponse> {
     return this.client.post('/debug/prompt-preview', { type, context });
   }
 

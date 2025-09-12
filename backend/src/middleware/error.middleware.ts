@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
-import { ApiError } from '../types/api.types';
 
 export class AppError extends Error {
   constructor(
     public statusCode: number,
     public message: string,
     public code?: string,
-    public details?: any
+    public details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'AppError';
@@ -19,7 +18,7 @@ export const errorHandler = (
   err: Error | AppError,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   // Log error
   logger.error({

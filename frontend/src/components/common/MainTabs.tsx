@@ -8,6 +8,7 @@ import { calendarApi, MeetingBriefResponse } from '../../services/calendar.api';
 
 type TabType = 'calendar' | 'bd' | 'research';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MainTabsProps {}
 
 export const MainTabs: React.FC<MainTabsProps> = () => {
@@ -16,7 +17,7 @@ export const MainTabs: React.FC<MainTabsProps> = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleGenerateCalendarBrief = async (eventId: string, options: any) => {
+  const handleGenerateCalendarBrief = async (eventId: string, options: { include_pdl_enrichment?: boolean; include_company_insights?: boolean }) => {
     setLoading(true);
     setError(null);
     

@@ -197,7 +197,7 @@ class ResearchService {
     return research;
   }
 
-  async researchCompany(companyName: string, executiveName?: string): Promise<CompanyResearch> {
+  async researchCompany(companyName: string, _executiveName?: string): Promise<CompanyResearch> {
     const year = CONSTANTS.CURRENT_YEAR;
     const research: CompanyResearch = {
       overview: [],

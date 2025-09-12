@@ -65,7 +65,7 @@ class CalendarApiService {
 
   private async makeRequest<T>(
     endpoint: string, 
-    options: RequestInit = {}
+    options: Record<string, unknown> = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
     

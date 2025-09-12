@@ -59,7 +59,7 @@ export function CompanySearchForm({
   };
 
   const clearSelection = () => {
-    onCompanySelect(null as any);
+    onCompanySelect({} as HubSpotCompany);
     setSearchQuery('');
     setShowResults(false);
   };

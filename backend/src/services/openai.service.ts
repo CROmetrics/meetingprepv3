@@ -3,7 +3,7 @@ import config from '../config/env';
 import logger from '../utils/logger';
 import { PROMPTS } from './prompts';
 import { IntelligenceReport } from '../types/bd.types';
-import { ToolCall, ToolResult } from '../types/api.types';
+import { ToolResult } from '../types/api.types';
 import researchService from './research.service';
 import hubspotService from './hubspot.service';
 

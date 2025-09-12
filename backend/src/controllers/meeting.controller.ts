@@ -20,7 +20,7 @@ export const generateMeetingBrief = asyncHandler(async (req: Request, res: Respo
   // Validate request body
   const validationResult = meetingBriefSchema.safeParse(req.body);
   if (!validationResult.success) {
-    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error);
+    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error as unknown as Record<string, unknown>);
   }
 
   const data = validationResult.data as MeetingBriefRequest;

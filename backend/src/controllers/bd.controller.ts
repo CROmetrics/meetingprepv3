@@ -38,7 +38,7 @@ export const researchAttendees = asyncHandler(async (req: Request, res: Response
   // Validate request
   const validationResult = bdMeetingSchema.safeParse(req.body);
   if (!validationResult.success) {
-    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error);
+    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error as unknown as Record<string, unknown>);
   }
 
   const data = validationResult.data as BDMeetingRequest;
@@ -111,7 +111,7 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   // Validate request
   const validationResult = bdMeetingSchema.safeParse(req.body);
   if (!validationResult.success) {
-    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error);
+    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error as unknown as Record<string, unknown>);
   }
 
   const data = validationResult.data as BDMeetingRequest;

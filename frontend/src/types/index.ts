@@ -108,7 +108,7 @@ export interface CompanyInsight {
   company: HubSpotCompany;
   relatedContacts: HubSpotContact[];
   totalContacts: number;
-  recentDeals: any[];
+  recentDeals: Record<string, unknown>[];
   keyStakeholders: HubSpotContact[];
 }
 

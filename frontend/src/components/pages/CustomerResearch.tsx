@@ -15,7 +15,6 @@ import apiService from '../../services/api';
 export function CustomerResearch() {
   const [selectedCompany, setSelectedCompany] = useState<HubSpotCompany | null>(null);
   const [currentPrompt, setCurrentPrompt] = useState('');
-  const [companyData, setCompanyData] = useState<CompanyInsight | null>(null);
   const [researchReport, setResearchReport] = useState<ResearchReport | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +22,6 @@ export function CustomerResearch() {
 
   const handleCompanySelect = (company: HubSpotCompany) => {
     setSelectedCompany(company);
-    setCompanyData(null);
     setResearchReport(null);
     setError(null);
     setShowDataPreview(false);
@@ -33,8 +31,8 @@ export function CustomerResearch() {
     setCurrentPrompt(prompt);
   };
 
-  const handleCompanyDataLoad = (data: CompanyInsight) => {
-    setCompanyData(data);
+  const handleCompanyDataLoad = (_data: CompanyInsight) => {
+    // Data loaded for preview - no state update needed
   };
 
   const generateResearch = async () => {
