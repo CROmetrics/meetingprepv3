@@ -72,3 +72,51 @@ export interface BDResearchData {
   }>;
   company: string;
 }
+
+// Customer Research types
+export interface HubSpotCompany {
+  id: string;
+  name?: string;
+  domain?: string;
+  industry?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  numberofemployees?: string;
+  annualrevenue?: string;
+  linkedincompanypage?: string;
+  description?: string;
+  website?: string;
+  founded_year?: string;
+  type?: string;
+}
+
+export interface HubSpotContact {
+  id: string;
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  jobtitle?: string;
+  company?: string;
+  linkedin_url?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+}
+
+export interface CompanyInsight {
+  company: HubSpotCompany;
+  relatedContacts: HubSpotContact[];
+  totalContacts: number;
+  recentDeals: any[];
+  keyStakeholders: HubSpotContact[];
+}
+
+export interface ResearchReport {
+  companyId: string;
+  companyName: string;
+  report: string;
+  hubspotData: CompanyInsight;
+  generatedAt: string;
+  promptUsed: string;
+}

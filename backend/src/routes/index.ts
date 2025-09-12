@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as bdController from '../controllers/bd.controller';
 import * as debugController from '../controllers/debug.controller';
+import customerResearchController from '../controllers/customer-research.controller';
 import calendarRoutes from './calendar.routes';
 
 const router = Router();
@@ -16,6 +17,15 @@ router.get('/health', (req, res) => {
 
 // Calendar routes
 router.use('/calendar', calendarRoutes);
+
+// Customer Research routes
+router.get('/research/companies/search', customerResearchController.searchCompanies);
+router.get('/research/companies/:id', customerResearchController.getCompanyDetails);
+router.get('/research/companies/:id/insights', customerResearchController.getCompanyInsights);
+router.post('/research/generate', customerResearchController.generateResearch);
+router.get('/research/prompts', customerResearchController.getResearchPrompt);
+router.put('/research/prompts', customerResearchController.updateResearchPrompt);
+router.post('/research/prompts/reset', customerResearchController.resetResearchPrompt);
 
 // BD routes
 router.post('/bd/research-attendees', bdController.researchAttendees);

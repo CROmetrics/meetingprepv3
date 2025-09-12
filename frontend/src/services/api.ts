@@ -7,6 +7,9 @@ import {
   UsageLog,
   BDReportData,
   BDResearchData,
+  HubSpotCompany,
+  CompanyInsight,
+  ResearchReport,
 } from '../types';
 
 class ApiService {
@@ -104,6 +107,42 @@ class ApiService {
 
   async previewPrompt(type: string, context: any): Promise<ApiResponse> {
     return this.client.post('/debug/prompt-preview', { type, context });
+  }
+
+  // Customer Research operations
+  async searchCompanies(query: string): Promise<ApiResponse<HubSpotCompany[]>> {
+    return this.client.get('/research/companies/search', {
+      params: { query }
+    });
+  }
+
+  async getCompanyDetails(companyId: string): Promise<ApiResponse<HubSpotCompany>> {
+    return this.client.get(`/research/companies/${companyId}`);
+  }
+
+  async getCompanyInsights(companyId: string): Promise<ApiResponse<CompanyInsight>> {
+    return this.client.get(`/research/companies/${companyId}/insights`);
+  }
+
+  async generateResearch(companyId: string, prompt: string): Promise<ApiResponse<ResearchReport>> {
+    return this.client.post('/research/generate', {
+      companyId,
+      prompt
+    }, {
+      timeout: 180000, // 3 minutes for research generation
+    });
+  }
+
+  async getResearchPrompt(): Promise<ApiResponse<{ prompt: string }>> {
+    return this.client.get('/research/prompts');
+  }
+
+  async updateResearchPrompt(prompt: string): Promise<ApiResponse<{ prompt: string }>> {
+    return this.client.put('/research/prompts', { prompt });
+  }
+
+  async resetResearchPrompt(): Promise<ApiResponse<{ prompt: string }>> {
+    return this.client.post('/research/prompts/reset');
   }
 }
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import BDMeetingForm from '../forms/BDMeetingForm';
 import { CalendarMeetingForm } from '../forms/CalendarMeetingForm';
+import { CustomerResearch } from '../pages/CustomerResearch';
 import { MobileBriefView } from './MobileBriefView';
 import { calendarApi, MeetingBriefResponse } from '../../services/calendar.api';
 
-type TabType = 'calendar' | 'bd';
+type TabType = 'calendar' | 'bd' | 'research';
 
 interface MainTabsProps {}
 
@@ -66,6 +67,12 @@ export const MainTabs: React.FC<MainTabsProps> = () => {
       label: 'Manual Research',
       icon: UserGroupIcon,
       description: 'Research prospects and companies manually'
+    },
+    {
+      id: 'research' as TabType,
+      label: 'Customer Research',
+      icon: MagnifyingGlassIcon,
+      description: 'AI-powered company research with HubSpot data'
     }
   ];
 
@@ -126,7 +133,7 @@ export const MainTabs: React.FC<MainTabsProps> = () => {
       )}
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className={activeTab === 'research' ? '' : 'bg-white rounded-lg shadow-sm border'}>
         {activeTab === 'calendar' && (
           <CalendarMeetingForm 
             onGenerateBrief={handleGenerateCalendarBrief}
@@ -138,6 +145,10 @@ export const MainTabs: React.FC<MainTabsProps> = () => {
           <div className="p-6">
             <BDMeetingForm />
           </div>
+        )}
+
+        {activeTab === 'research' && (
+          <CustomerResearch />
         )}
       </div>
     </div>
