@@ -287,6 +287,29 @@ class OpenAIService {
     return results;
   }
 
+  async generateResponse(prompt: string): Promise<string> {
+    try {
+      const client = this.ensureClient();
+      
+      const response = await client.chat.completions.create({
+        model: config.OPENAI_MODEL,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 2000,
+        temperature: 0.7,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response content received from OpenAI');
+      }
+
+      return content.trim();
+    } catch (error) {
+      logger.error('Error generating response:', error);
+      throw new Error('Failed to generate response');
+    }
+  }
+
   async testConnection(): Promise<boolean> {
     try {
       const client = this.ensureClient();

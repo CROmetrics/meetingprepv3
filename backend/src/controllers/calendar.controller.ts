@@ -190,7 +190,11 @@ export const generateMeetingBrief = async (req: Request, res: Response) => {
     logger.info(`Processing meeting: ${meetingContext.subject} with ${meetingContext.attendeeEmails.length} attendees`);
 
     // Enrich attendee data
-    const enrichmentResults = {
+    const enrichmentResults: {
+      hubspot: any[];
+      peopleDataLabs: any[];
+      companyInsights: Map<string, any>;
+    } = {
       hubspot: [],
       peopleDataLabs: [],
       companyInsights: new Map()

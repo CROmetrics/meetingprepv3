@@ -516,6 +516,13 @@ class HubSpotService {
   }
 
   /**
+   * Check if service is configured
+   */
+  isConfigured(): boolean {
+    return this.client !== null;
+  }
+
+  /**
    * Get related companies for attendees
    */
   async getRelatedCompanies(attendeeEmails: string[]): Promise<Map<string, CompanyInsight>> {

@@ -81,7 +81,7 @@ class GoogleCalendarService {
     
     const authUrl = client.generateAuthUrl({
       access_type: 'offline',
-      scope: CONSTANTS.GOOGLE_CALENDAR.SCOPES,
+      scope: [...CONSTANTS.GOOGLE_CALENDAR.SCOPES],
       prompt: 'consent'
     });
 
@@ -96,7 +96,13 @@ class GoogleCalendarService {
     const client = this.ensureClient();
     
     try {
-      const { tokens } = await client.getAccessToken(code);
+      const { tokens } = await new Promise((resolve, reject) => {
+        client.getAccessToken(code, (err, tokens) => {
+          if (err) reject(err);
+          else resolve({ tokens });
+        });
+      }) as { tokens: any };
+      
       client.setCredentials(tokens);
       
       logger.info('Successfully obtained Google Calendar access tokens');
@@ -157,7 +163,7 @@ class GoogleCalendarService {
         .map(event => ({
           id: event.id!,
           summary: event.summary || 'No Title',
-          description: event.description,
+          description: event.description || undefined,
           start: {
             dateTime: event.start?.dateTime || event.start?.date || '',
             timeZone: event.start?.timeZone || 'UTC'
@@ -168,23 +174,23 @@ class GoogleCalendarService {
           },
           attendees: event.attendees?.map(attendee => ({
             email: attendee.email!,
-            displayName: attendee.displayName,
-            responseStatus: attendee.responseStatus
+            displayName: attendee.displayName || undefined,
+            responseStatus: attendee.responseStatus || undefined
           })) || [],
           organizer: {
             email: event.organizer?.email || '',
-            displayName: event.organizer?.displayName
+            displayName: event.organizer?.displayName || undefined
           },
-          location: event.location,
-          hangoutLink: event.hangoutLink,
+          location: event.location || undefined,
+          hangoutLink: event.hangoutLink || undefined,
           conferenceData: event.conferenceData ? {
-            conferenceId: event.conferenceData.conferenceId,
+            conferenceId: event.conferenceData.conferenceId || undefined,
             conferenceSolution: event.conferenceData.conferenceSolution ? {
               name: event.conferenceData.conferenceSolution.name || ''
             } : undefined,
             entryPoints: event.conferenceData.entryPoints?.map(ep => ({
               entryPointType: ep.entryPointType || '',
-              uri: ep.uri
+              uri: ep.uri || undefined
             }))
           } : undefined
         }));
@@ -221,7 +227,7 @@ class GoogleCalendarService {
       return {
         id: event.id!,
         summary: event.summary || 'No Title',
-        description: event.description,
+        description: event.description || undefined,
         start: {
           dateTime: event.start?.dateTime || event.start?.date || '',
           timeZone: event.start?.timeZone || 'UTC'
@@ -232,23 +238,23 @@ class GoogleCalendarService {
         },
         attendees: event.attendees?.map(attendee => ({
           email: attendee.email!,
-          displayName: attendee.displayName,
-          responseStatus: attendee.responseStatus
+          displayName: attendee.displayName || undefined,
+          responseStatus: attendee.responseStatus || undefined
         })) || [],
         organizer: {
           email: event.organizer?.email || '',
-          displayName: event.organizer?.displayName
+          displayName: event.organizer?.displayName || undefined
         },
-        location: event.location,
-        hangoutLink: event.hangoutLink,
+        location: event.location || undefined,
+        hangoutLink: event.hangoutLink || undefined,
         conferenceData: event.conferenceData ? {
-          conferenceId: event.conferenceData.conferenceId,
+          conferenceId: event.conferenceData.conferenceId || undefined,
           conferenceSolution: event.conferenceData.conferenceSolution ? {
             name: event.conferenceData.conferenceSolution.name || ''
           } : undefined,
           entryPoints: event.conferenceData.entryPoints?.map(ep => ({
             entryPointType: ep.entryPointType || '',
-            uri: ep.uri
+            uri: ep.uri || undefined
           }))
         } : undefined
       };
