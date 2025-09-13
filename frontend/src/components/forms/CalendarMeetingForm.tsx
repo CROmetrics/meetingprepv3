@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { calendarApi, CalendarTokens } from '../../services/calendar.api';
 
 interface CalendarEvent {
   id: string;
@@ -31,64 +32,57 @@ interface CalendarMeetingFormProps {
   loading?: boolean;
 }
 
-export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({ 
-  onGenerateBrief, 
-  loading = false 
+export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
+  onGenerateBrief,
+  loading = false
 }) => {
-  const [accessToken, setAccessToken] = useState('');
-  const [refreshToken, setRefreshToken] = useState('');
+  const [tokens, setTokens] = useState<CalendarTokens | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [, setAuthUrl] = useState('');
 
   // Options
   const [includePDL, setIncludePDL] = useState(true);
   const [includeCompanyInsights, setIncludeCompanyInsights] = useState(true);
 
-  const fetchAuthUrl = async () => {
-    try {
-      const response = await fetch('/api/calendar/auth-url');
-      const data = await response.json();
-      
-      if (data.authUrl) {
-        setAuthUrl(data.authUrl);
-        window.open(data.authUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('Error fetching auth URL:', error);
+  // Load stored tokens on component mount
+  useEffect(() => {
+    const storedTokens = calendarApi.getStoredTokens();
+    if (storedTokens) {
+      setTokens(storedTokens);
+      // Auto-fetch events when tokens are available
+      fetchEventsWithTokens(storedTokens);
     }
-  };
+  }, []);
 
-  const fetchEvents = async () => {
-    if (!accessToken) {
-      alert('Please connect your calendar first');
-      return;
-    }
 
+  const fetchEventsWithTokens = async (tokensToUse: CalendarTokens) => {
     setLoadingEvents(true);
     try {
-      const response = await fetch('/api/calendar/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          lookback_days: 2,
-          lookahead_days: 14
-        }),
+      const data = await calendarApi.getCalendarEvents(tokensToUse, {
+        lookback_days: 2,
+        lookahead_days: 14
       });
 
-      const data = await response.json();
       if (data.events) {
         setEvents(data.events);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
+      alert('Failed to fetch calendar events');
     } finally {
       setLoadingEvents(false);
     }
+  };
+
+  const fetchEvents = async () => {
+    if (!tokens) {
+      alert('Please connect your calendar first');
+      return;
+    }
+
+    await fetchEventsWithTokens(tokens);
   };
 
   const handleGenerateBrief = async () => {
@@ -98,8 +92,6 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
     }
 
     await onGenerateBrief(selectedEvent.id, {
-      access_token: accessToken,
-      refresh_token: refreshToken,
       include_pdl_enrichment: includePDL,
       include_company_insights: includeCompanyInsights,
     });
@@ -134,60 +126,11 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
           Calendar Meeting Brief Generator
         </h2>
 
-        {/* Step 1: Connect Calendar */}
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
-            1. Connect Your Google Calendar
-          </h3>
-          
-          {!accessToken ? (
-            <div className="space-y-4">
-              <button
-                onClick={fetchAuthUrl}
-                className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium"
-              >
-                Connect Google Calendar
-              </button>
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Access Token (paste from authorization):
-                </label>
-                <input
-                  type="password"
-                  value={accessToken}
-                  onChange={(e) => setAccessToken(e.target.value)}
-                  placeholder="Paste your access token here"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Refresh Token (optional):
-                </label>
-                <input
-                  type="password"
-                  value={refreshToken}
-                  onChange={(e) => setRefreshToken(e.target.value)}
-                  placeholder="Paste refresh token (optional)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-green-700 font-medium">Calendar connected</span>
-            </div>
-          )}
-        </div>
-
-        {/* Step 2: Load Events */}
-        {accessToken && (
+        {/* Load Events */}
+        {tokens && (
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              2. Load Your Meetings
+              1. Load Your Meetings
             </h3>
             
             <button
@@ -200,11 +143,11 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
           </div>
         )}
 
-        {/* Step 3: Select Event */}
+        {/* Step 2: Select Event */}
         {events.length > 0 && (
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              3. Select a Meeting
+              2. Select a Meeting
             </h3>
             
             <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -298,11 +241,11 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
           </div>
         )}
 
-        {/* Step 4: Options */}
+        {/* Step 3: Options */}
         {selectedEvent && (
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              4. Briefing Options
+              3. Briefing Options
             </h3>
             
             <div className="space-y-4">
@@ -343,7 +286,7 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
           </div>
         )}
 
-        {/* Step 5: Generate */}
+        {/* Step 4: Generate */}
         {selectedEvent && (
           <div>
             <button
