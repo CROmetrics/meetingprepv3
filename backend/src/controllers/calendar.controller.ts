@@ -72,7 +72,7 @@ export const handleCalendarCallback = async (req: Request, res: Response) => {
  */
 export const getCalendarEvents = async (req: Request, res: Response) => {
   try {
-    const { access_token, refresh_token, lookback_days = 7, lookahead_days = 30 } = req.body;
+    const { access_token, refresh_token, lookback_days, lookahead_days } = req.body;
 
     if (!access_token) {
       return res.status(400).json({
@@ -83,10 +83,13 @@ export const getCalendarEvents = async (req: Request, res: Response) => {
     // Set the access token
     googleCalendarService.setAccessToken(access_token, refresh_token);
 
-    // Fetch events
+    // Fetch events with proper defaults
+    const lookbackDays = lookback_days !== undefined ? parseInt(lookback_days as string, 10) : 7;
+    const lookaheadDays = lookahead_days !== undefined ? parseInt(lookahead_days as string, 10) : 30;
+
     const events = await googleCalendarService.getUpcomingEvents(
-      parseInt(lookback_days as string, 10),
-      parseInt(lookahead_days as string, 10)
+      lookbackDays,
+      lookaheadDays
     );
 
     res.json({
