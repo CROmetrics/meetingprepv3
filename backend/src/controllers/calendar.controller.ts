@@ -39,34 +39,31 @@ export const handleCalendarCallback = async (req: Request, res: Response) => {
 
     if (error) {
       logger.error('Calendar authorization error:', error);
-      return res.status(400).json({
-        error: 'Calendar authorization was denied or failed',
-        details: error
-      });
+      // Redirect to frontend with error
+      return res.redirect(`https://meetingprepv3-production.up.railway.app/calendar?error=${encodeURIComponent(error as string)}&status=error`);
     }
 
     if (!code || typeof code !== 'string') {
-      return res.status(400).json({
-        error: 'Missing authorization code',
-      });
+      // Redirect to frontend with error
+      return res.redirect(`https://meetingprepv3-production.up.railway.app/calendar?error=${encodeURIComponent('Missing authorization code')}&status=error`);
     }
 
     const tokens = await googleCalendarService.getAccessToken(code);
-    
-    // In a real application, you'd store these tokens securely for the user
-    // For now, we'll return them to be stored client-side
-    res.json({
-      message: 'Calendar authorization successful',
-      tokens: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token
-      }
-    });
+
+    // Redirect to frontend with success and tokens
+    const redirectUrl = new URL('https://meetingprepv3-production.up.railway.app/calendar');
+    redirectUrl.searchParams.set('status', 'success');
+    redirectUrl.searchParams.set('access_token', tokens.access_token);
+    if (tokens.refresh_token) {
+      redirectUrl.searchParams.set('refresh_token', tokens.refresh_token);
+    }
+
+    res.redirect(redirectUrl.toString());
   } catch (error) {
     logger.error('Error handling calendar callback:', error);
-    res.status(500).json({
-      error: 'Failed to complete calendar authorization',
-    });
+    // Redirect to frontend with error
+    const errorMessage = error instanceof Error ? error.message : 'Failed to complete calendar authorization';
+    res.redirect(`https://meetingprepv3-production.up.railway.app/calendar?error=${encodeURIComponent(errorMessage)}&status=error`);
   }
 };
 
