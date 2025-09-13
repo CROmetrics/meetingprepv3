@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useNavigate } from 'react-router-dom';
 import { calendarApi, CalendarTokens } from '../../services/calendar.api';
 
 interface CalendarEvent {
@@ -28,23 +29,17 @@ interface CalendarEvent {
 }
 
 interface CalendarMeetingFormProps {
-  onGenerateBrief: (eventId: string, options: any) => Promise<void>;
-  loading?: boolean;
+  // No props needed anymore since we're navigating to manual research
 }
 
-export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
-  onGenerateBrief,
-  loading = false
-}) => {
+export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
+  const navigate = useNavigate();
   const [tokens, setTokens] = useState<CalendarTokens | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(false);
 
-  // Options
-  const [includePDL, setIncludePDL] = useState(true);
-  const [includeCompanyInsights, setIncludeCompanyInsights] = useState(true);
 
   // Load stored tokens on component mount
   useEffect(() => {
@@ -85,17 +80,6 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
     await fetchEventsWithTokens(tokens);
   };
 
-  const handleGenerateBrief = async () => {
-    if (!selectedEvent) {
-      alert('Please select a meeting');
-      return;
-    }
-
-    await onGenerateBrief(selectedEvent.id, {
-      include_pdl_enrichment: includePDL,
-      include_company_insights: includeCompanyInsights,
-    });
-  };
 
   const formatDateTime = (dateTimeStr: string) => {
     const date = new Date(dateTimeStr);
@@ -117,6 +101,53 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
     const startTime = new Date(start);
     const endTime = new Date(end);
     return Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
+  };
+
+  const populateManualResearch = (event: CalendarEvent) => {
+    // Extract company names from attendee domains
+    const companyDomains = new Set<string>();
+    event.attendees.forEach(attendee => {
+      const domain = attendee.email.split('@')[1];
+      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
+        companyDomains.add(domain);
+      }
+    });
+
+    // Convert attendees to manual research format
+    const attendees = event.attendees.map((attendee, index) => {
+      const domain = attendee.email.split('@')[1];
+      let companyName = '';
+
+      // Try to extract company name from domain
+      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
+        companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+      }
+
+      return {
+        id: (index + 1).toString(),
+        name: attendee.displayName || '',
+        email: attendee.email,
+        title: '',
+        company: companyName,
+        linkedinUrl: '',
+      };
+    });
+
+    // Create the form data
+    const formData = {
+      company: Array.from(companyDomains).map(domain =>
+        domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
+      ).join(', ') || 'Meeting Company',
+      purpose: event.summary,
+      additionalContext: event.description || `Meeting scheduled for ${new Date(event.start.dateTime).toLocaleString()}${event.location ? ` at ${event.location}` : ''}`,
+      attendees,
+    };
+
+    // Store in localStorage for the manual research form
+    localStorage.setItem('bdMeetingForm', JSON.stringify(formData));
+
+    // Navigate to manual research interface
+    navigate('/');
   };
 
   return (
@@ -241,68 +272,19 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = ({
           </div>
         )}
 
-        {/* Step 3: Options */}
-        {selectedEvent && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">
-              3. Briefing Options
-            </h3>
-            
-            <div className="space-y-4">
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={includePDL}
-                  onChange={(e) => setIncludePDL(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-700">
-                    Professional Profile Enrichment
-                  </span>
-                  <p className="text-xs text-gray-500">
-                    Include LinkedIn profiles and professional backgrounds via People Data Labs
-                  </p>
-                </div>
-              </label>
-              
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={includeCompanyInsights}
-                  onChange={(e) => setIncludeCompanyInsights(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <div>
-                  <span className="text-sm font-medium text-gray-700">
-                    Company Intelligence
-                  </span>
-                  <p className="text-xs text-gray-500">
-                    Include company insights, relationships, and stakeholder analysis from HubSpot
-                  </p>
-                </div>
-              </label>
-            </div>
-          </div>
-        )}
 
-        {/* Step 4: Generate */}
+        {/* Step 3: Research Meeting */}
         {selectedEvent && (
           <div>
             <button
-              onClick={handleGenerateBrief}
-              disabled={loading}
-              className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => populateManualResearch(selectedEvent)}
+              className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Generating Brief...</span>
-                </div>
-              ) : (
-                'Generate Meeting Brief'
-              )}
+              Research This Meeting
             </button>
+            <p className="text-sm text-gray-500 mt-2 text-center">
+              This will populate the manual research interface with meeting details
+            </p>
           </div>
         )}
       </div>

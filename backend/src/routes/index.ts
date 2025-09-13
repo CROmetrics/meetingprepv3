@@ -20,6 +20,8 @@ router.use('/calendar', calendarRoutes);
 
 // Customer Research routes
 router.get('/research/companies/search', customerResearchController.searchCompanies);
+router.post('/research/companies/research', customerResearchController.researchCompany);
+router.post('/research/companies/add-to-hubspot', customerResearchController.addCompanyToHubSpot);
 router.get('/research/companies/:id', customerResearchController.getCompanyDetails);
 router.get('/research/companies/:id/insights', customerResearchController.getCompanyInsights);
 router.post('/research/generate', customerResearchController.generateResearch);

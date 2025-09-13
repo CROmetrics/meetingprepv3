@@ -59,21 +59,6 @@ export function CalendarPage() {
     }
   };
 
-  const handleGenerateBrief = async (eventId: string, options: any) => {
-    if (!tokens) {
-      setError('No authentication tokens available');
-      return;
-    }
-
-    try {
-      const briefData = await calendarApi.generateMeetingBrief(eventId, tokens, options);
-      console.log('Meeting brief generated:', briefData);
-      // Handle the brief data (could show in a modal or navigate to a results page)
-    } catch (error) {
-      console.error('Error generating brief:', error);
-      setError('Failed to generate meeting brief');
-    }
-  };
 
   return (
     <Layout>
@@ -150,9 +135,7 @@ export function CalendarPage() {
 
         {/* Calendar Meeting Form - only show if authenticated */}
         {authStatus === 'success' && tokens && (
-          <CalendarMeetingForm
-            onGenerateBrief={handleGenerateBrief}
-          />
+          <CalendarMeetingForm />
         )}
       </div>
     </Layout>

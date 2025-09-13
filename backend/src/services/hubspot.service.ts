@@ -649,6 +649,82 @@ class HubSpotService {
   }
 
   /**
+   * Create a new company in HubSpot
+   */
+  async createCompany(companyData: {
+    name: string;
+    domain?: string;
+    industry?: string;
+    description?: string;
+    website?: string;
+    numberofemployees?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    founded_year?: string;
+  }): Promise<HubSpotCompany | null> {
+    if (!this.client) {
+      logger.error('HubSpot service not configured');
+      return null;
+    }
+
+    try {
+      logger.info(`Creating HubSpot company: ${companyData.name}`);
+
+      // Prepare properties for HubSpot
+      const properties: Record<string, string> = {
+        name: companyData.name,
+      };
+
+      // Add optional properties if they exist
+      if (companyData.domain) properties.domain = companyData.domain;
+      if (companyData.industry) properties.industry = companyData.industry;
+      if (companyData.description) properties.description = companyData.description;
+      if (companyData.website) properties.website = companyData.website;
+      if (companyData.numberofemployees) properties.numberofemployees = companyData.numberofemployees;
+      if (companyData.city) properties.city = companyData.city;
+      if (companyData.state) properties.state = companyData.state;
+      if (companyData.country) properties.country = companyData.country;
+      if (companyData.founded_year) properties.founded_year = companyData.founded_year;
+
+      const response = await this.client.post('/crm/v3/objects/companies', {
+        properties
+      });
+
+      if (response.data && response.data.id) {
+        logger.info(`Successfully created HubSpot company: ${companyData.name} (ID: ${response.data.id})`);
+        return {
+          id: response.data.id,
+          name: response.data.properties?.name,
+          domain: response.data.properties?.domain,
+          industry: response.data.properties?.industry,
+          description: response.data.properties?.description,
+          website: response.data.properties?.website,
+          numberofemployees: response.data.properties?.numberofemployees,
+          city: response.data.properties?.city,
+          state: response.data.properties?.state,
+          country: response.data.properties?.country,
+          founded_year: response.data.properties?.founded_year,
+        };
+      }
+
+      return null;
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        logger.warn(`Company ${companyData.name} already exists in HubSpot`);
+        // Try to find the existing company
+        const existingCompanies = await this.searchCompanies(companyData.name);
+        if (existingCompanies.length > 0) {
+          return existingCompanies[0];
+        }
+      } else {
+        logger.error(`Error creating HubSpot company ${companyData.name}:`, error.response?.data || error.message);
+      }
+      return null;
+    }
+  }
+
+  /**
    * Check if service is configured
    */
   isConfigured(): boolean {

@@ -157,6 +157,35 @@ class ApiService {
   async resetResearchPrompt(): Promise<ApiResponse<{ prompt: string }>> {
     return this.client.post('/research/prompts/reset');
   }
+
+  // Company Research operations
+  async researchCompany(domain: string, companyName?: string): Promise<ApiResponse<{
+    hubspot: HubSpotCompany | null;
+    pdl: any | null;
+    source: string;
+    domain: string;
+    searchQuery: string;
+  }>> {
+    return this.client.post('/research/companies/research', {
+      domain,
+      companyName,
+    });
+  }
+
+  async addCompanyToHubSpot(companyData: {
+    name: string;
+    domain?: string;
+    industry?: string;
+    description?: string;
+    website?: string;
+    numberofemployees?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    founded_year?: string;
+  }): Promise<ApiResponse<HubSpotCompany>> {
+    return this.client.post('/research/companies/add-to-hubspot', companyData);
+  }
 }
 
 export default new ApiService();

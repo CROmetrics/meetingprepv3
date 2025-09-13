@@ -40,6 +40,10 @@ export default function BDMeetingForm() {
   const [researchData, setResearchData] = useState<Record<string, any>>({});
   const [researchStatus, setResearchStatus] = useState<Record<string, 'pending' | 'researching' | 'completed'>>({});
 
+  // Company research state
+  const [companyResearchData, setCompanyResearchData] = useState<any>(null);
+  const [companyResearchStatus, setCompanyResearchStatus] = useState<'idle' | 'researching' | 'completed' | 'error'>('idle');
+
   // Individual attendee research mutation
   const singleResearchMutation = useMutation({
     mutationFn: ({ attendee }: { attendeeId: string; attendee: any }) =>
@@ -98,6 +102,36 @@ export default function BDMeetingForm() {
             : attendee
         ),
       }));
+    },
+  });
+
+  // Company research mutation
+  const companyResearchMutation = useMutation({
+    mutationFn: (data: { domain: string; companyName?: string }) =>
+      api.researchCompany(data.domain, data.companyName),
+    onMutate: () => {
+      setCompanyResearchStatus('researching');
+    },
+    onSuccess: (response) => {
+      setCompanyResearchData(response.data);
+      setCompanyResearchStatus('completed');
+    },
+    onError: () => {
+      setCompanyResearchStatus('error');
+    },
+  });
+
+  // Add company to HubSpot mutation
+  const addCompanyToHubSpotMutation = useMutation({
+    mutationFn: (companyData: any) => api.addCompanyToHubSpot(companyData),
+    onSuccess: () => {
+      // Refresh company research to show it's now in HubSpot
+      if (companyResearchData) {
+        companyResearchMutation.mutate({
+          domain: companyResearchData.domain,
+          companyName: companyResearchData.searchQuery,
+        });
+      }
     },
   });
 
@@ -188,6 +222,44 @@ export default function BDMeetingForm() {
   const getAttendeeData = (attendeeId: string) => researchData[attendeeId];
   const canResearchAttendee = (attendee: any) => formData.company.trim() && attendee.name.trim();
 
+  // Helper function to research company
+  const handleResearchCompany = () => {
+    // Extract domain from attendees' emails
+    const attendeesDomains = formData.attendees
+      .map(attendee => attendee.email ? attendee.email.split('@')[1] : null)
+      .filter((domain): domain is string =>
+        domain !== null &&
+        domain !== '' &&
+        !['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com'].includes(domain)
+      );
+
+    const primaryDomain = attendeesDomains[0];
+    if (primaryDomain) {
+      companyResearchMutation.mutate({
+        domain: primaryDomain,
+        companyName: formData.company || undefined,
+      });
+    }
+  };
+
+  const handleAddCompanyToHubSpot = () => {
+    if (companyResearchData?.pdl) {
+      const pdlData = companyResearchData.pdl;
+      addCompanyToHubSpotMutation.mutate({
+        name: pdlData.name || formData.company,
+        domain: companyResearchData.domain,
+        industry: pdlData.industry,
+        description: pdlData.summary,
+        website: pdlData.website,
+        numberofemployees: pdlData.employee_count ? pdlData.employee_count.toString() : undefined,
+        city: pdlData.location?.city,
+        state: pdlData.location?.state,
+        country: pdlData.location?.country,
+        founded_year: pdlData.founded ? pdlData.founded.toString() : undefined,
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-6">
@@ -205,6 +277,104 @@ export default function BDMeetingForm() {
             className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors"
             required
           />
+
+          {/* Company Research Section */}
+          <div className="mt-4">
+            <div className="flex items-center gap-3 mb-3">
+              <button
+                type="button"
+                onClick={handleResearchCompany}
+                disabled={!formData.company || formData.attendees.length === 0 || !formData.attendees[0].email || companyResearchStatus === 'researching'}
+                className="flex items-center gap-2 px-4 py-2 bg-cro-purple-600 text-white rounded-xl text-sm font-medium hover:bg-cro-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {companyResearchStatus === 'researching' ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+                {companyResearchStatus === 'researching' ? 'Researching...' : 'Research Company'}
+              </button>
+
+              {companyResearchStatus === 'completed' && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <CheckCircle className="w-4 h-4" />
+                  Research Complete
+                </span>
+              )}
+            </div>
+
+            {/* Company Research Results */}
+            {companyResearchStatus === 'completed' && companyResearchData && (
+              <div className="border border-cro-plat-300 rounded-xl p-4 bg-cro-plat-50">
+                <h4 className="text-sm font-semibold text-cro-soft-black-700 mb-2">Company Research Results</h4>
+
+                {companyResearchData.hubspot ? (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-green-700">Found in HubSpot</span>
+                    </div>
+                    <div className="text-sm text-cro-soft-black-600">
+                      <div><strong>Name:</strong> {companyResearchData.hubspot.name}</div>
+                      {companyResearchData.hubspot.domain && (
+                        <div><strong>Domain:</strong> {companyResearchData.hubspot.domain}</div>
+                      )}
+                      {companyResearchData.hubspot.industry && (
+                        <div><strong>Industry:</strong> {companyResearchData.hubspot.industry}</div>
+                      )}
+                    </div>
+                  </div>
+                ) : companyResearchData.pdl ? (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-blue-700">Found via People Data Labs</span>
+                    </div>
+                    <div className="text-sm text-cro-soft-black-600 mb-3">
+                      <div><strong>Name:</strong> {companyResearchData.pdl.name}</div>
+                      <div><strong>Domain:</strong> {companyResearchData.domain}</div>
+                      {companyResearchData.pdl.industry && (
+                        <div><strong>Industry:</strong> {companyResearchData.pdl.industry}</div>
+                      )}
+                      {companyResearchData.pdl.employee_count && (
+                        <div><strong>Employees:</strong> {companyResearchData.pdl.employee_count}</div>
+                      )}
+                      {companyResearchData.pdl.summary && (
+                        <div><strong>Description:</strong> {companyResearchData.pdl.summary}</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddCompanyToHubSpot}
+                      disabled={addCompanyToHubSpotMutation.isPending}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-cro-green-600 text-white rounded-lg text-xs font-medium hover:bg-cro-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {addCompanyToHubSpotMutation.isPending ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Plus className="w-3 h-3" />
+                      )}
+                      {addCompanyToHubSpotMutation.isPending ? 'Adding...' : 'Add to HubSpot'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-cro-soft-black-600">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <span className="text-yellow-700 font-medium">No company data found</span>
+                    </div>
+                    <div>Company not found in HubSpot or People Data Labs for domain: {companyResearchData.domain}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {companyResearchStatus === 'error' && (
+              <div className="border border-red-300 rounded-xl p-3 bg-red-50 text-sm text-red-600">
+                Error researching company. Please try again.
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Meeting Attendees */}
