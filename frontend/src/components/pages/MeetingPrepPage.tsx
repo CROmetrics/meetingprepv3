@@ -11,32 +11,7 @@ type TabType = 'calendar' | 'bd';
 export function MeetingPrepPage() {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [briefData, setBriefData] = useState<MeetingBriefResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleGenerateCalendarBrief = async (eventId: string, options: { include_pdl_enrichment?: boolean; include_company_insights?: boolean }) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const tokens = calendarApi.getStoredTokens();
-      if (!tokens) {
-        throw new Error('No calendar tokens found. Please reconnect your calendar.');
-      }
-
-      const response = await calendarApi.generateMeetingBrief(eventId, tokens, {
-        include_pdl_enrichment: options.include_pdl_enrichment,
-        include_company_insights: options.include_company_insights,
-      });
-
-      setBriefData(response);
-    } catch (error) {
-      console.error('Error generating calendar brief:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate meeting brief');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCloseBrief = () => {
     setBriefData(null);
