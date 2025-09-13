@@ -152,8 +152,6 @@ export function CalendarPage() {
         {authStatus === 'success' && tokens && (
           <CalendarMeetingForm
             onGenerateBrief={handleGenerateBrief}
-            accessToken={tokens.access_token}
-            refreshToken={tokens.refresh_token}
           />
         )}
       </div>
