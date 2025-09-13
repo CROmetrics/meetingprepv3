@@ -154,7 +154,13 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
 
       // Navigate to manual research interface
       console.log('Navigating to /');
-      navigate('/');
+      try {
+        navigate('/');
+        console.log('Navigate called successfully');
+      } catch (navError) {
+        console.error('Navigate failed, trying window.location:', navError);
+        window.location.href = '/';
+      }
     } catch (error) {
       console.error('Error in populateManualResearch:', error);
     }
@@ -287,14 +293,19 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
         {selectedEvent && (
           <div>
             <button
-              onClick={() => {
-                console.log('Research button clicked, selectedEvent:', selectedEvent);
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                alert('Button clicked!'); // Simple alert to test
+                console.log('BUTTON CLICKED - Research button clicked, selectedEvent:', selectedEvent);
                 if (selectedEvent) {
                   populateManualResearch(selectedEvent);
                 } else {
                   console.error('No selected event');
+                  alert('No selected event');
                 }
               }}
+              type="button"
               className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Research This Meeting
