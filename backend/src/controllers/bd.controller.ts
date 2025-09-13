@@ -34,6 +34,77 @@ const bdMeetingSchema = z.object({
   additionalContext: z.string().optional(),
 });
 
+export const researchSingleAttendee = asyncHandler(async (req: Request, res: Response) => {
+  // Validate request for single attendee
+  const singleAttendeeSchema = z.object({
+    company: z.string().min(1, 'Company name is required'),
+    attendee: attendeeSchema,
+  });
+
+  const validationResult = singleAttendeeSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    throw new AppError(400, 'Invalid request data', 'VALIDATION_ERROR', validationResult.error as unknown as Record<string, unknown>);
+  }
+
+  const { company, attendee } = validationResult.data;
+
+  // Log usage
+  logUsage(
+    'research_single_attendee',
+    {
+      company,
+      attendeeName: attendee.name,
+    },
+    req.ip
+  );
+
+  const research: AttendeeResearch = {
+    name: attendee.name,
+    title: attendee.title,
+    company: attendee.company || company,
+    email: attendee.email,
+    linkedinUrl: attendee.linkedinUrl,
+  };
+
+  // Look up in HubSpot
+  if (hubspotService) {
+    try {
+      const hubspotContact = await hubspotService.findContact(attendee);
+      if (hubspotContact) {
+        research.hubspotData = hubspotContact;
+        if (hubspotContact.linkedin_url && !research.linkedinUrl) {
+          research.linkedinUrl = hubspotContact.linkedin_url;
+        }
+      }
+    } catch (error) {
+      console.error(`HubSpot lookup failed for ${attendee.name}:`, error);
+    }
+  }
+
+  // Research LinkedIn if not already found
+  if (!research.linkedinUrl) {
+    const linkedinInfo = await researchService.researchAttendeeLinkedIn(
+      attendee.name,
+      attendee.company || company,
+      attendee.title
+    );
+    research.linkedinUrl = linkedinInfo.url;
+    research.linkedinSnippet = linkedinInfo.snippet;
+  }
+
+  // Background research
+  const backgroundQuery = `${attendee.name} ${attendee.company || company} ${attendee.title || ''} background experience`;
+  research.searchResults = await researchService.webSearch(backgroundQuery, 3);
+
+  res.json({
+    success: true,
+    data: {
+      attendee: research,
+      company,
+    },
+  });
+});
+
 export const researchAttendees = asyncHandler(async (req: Request, res: Response) => {
   // Validate request
   const validationResult = bdMeetingSchema.safeParse(req.body);

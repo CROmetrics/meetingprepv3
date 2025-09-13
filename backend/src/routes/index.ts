@@ -28,6 +28,7 @@ router.put('/research/prompts', customerResearchController.updateResearchPrompt)
 router.post('/research/prompts/reset', customerResearchController.resetResearchPrompt);
 
 // BD routes
+router.post('/bd/research-attendee', bdController.researchSingleAttendee);
 router.post('/bd/research-attendees', bdController.researchAttendees);
 router.post('/bd/generate', bdController.generateBDReport);
 router.post('/bd/add-to-hubspot', bdController.addToHubSpot);

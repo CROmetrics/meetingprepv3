@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   Users,
   Building2,
@@ -8,6 +9,7 @@ import {
   Sparkles,
   Search,
   CheckCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
@@ -30,9 +32,50 @@ export default function BDMeetingForm() {
         title: '',
         company: '',
         linkedinUrl: '',
-        researchStatus: 'pending',
       },
     ],
+  });
+
+  // Track research status and data separately (not persisted to localStorage)
+  const [researchData, setResearchData] = useState<Record<string, any>>({});
+  const [researchStatus, setResearchStatus] = useState<Record<string, 'pending' | 'researching' | 'completed'>>({});
+
+  // Individual attendee research mutation
+  const singleResearchMutation = useMutation({
+    mutationFn: ({ attendeeId, attendee }: { attendeeId: string; attendee: any }) =>
+      api.researchSingleAttendee(formData.company, attendee),
+    onMutate: ({ attendeeId }) => {
+      setResearchStatus(prev => ({ ...prev, [attendeeId]: 'researching' }));
+    },
+    onSuccess: (response, { attendeeId }) => {
+      const researchedAttendee = response.data?.attendee;
+      if (researchedAttendee) {
+        // Store research data
+        setResearchData(prev => ({ ...prev, [attendeeId]: researchedAttendee }));
+        setResearchStatus(prev => ({ ...prev, [attendeeId]: 'completed' }));
+
+        // Auto-populate form fields from research
+        setFormData(prev => ({
+          ...prev,
+          attendees: prev.attendees.map(attendee => {
+            if (attendee.id === attendeeId) {
+              const hubspotData = researchedAttendee.hubspotData;
+              return {
+                ...attendee,
+                email: attendee.email || hubspotData?.email || '',
+                title: attendee.title || hubspotData?.jobtitle || '',
+                company: attendee.company || hubspotData?.company || '',
+                linkedinUrl: attendee.linkedinUrl || hubspotData?.linkedin_url || researchedAttendee.linkedinUrl || '',
+              };
+            }
+            return attendee;
+          })
+        }));
+      }
+    },
+    onError: (error, { attendeeId }) => {
+      setResearchStatus(prev => ({ ...prev, [attendeeId]: 'pending' }));
+    },
   });
 
   // Research attendees mutation
@@ -114,7 +157,6 @@ export default function BDMeetingForm() {
           title: '',
           company: '',
           linkedinUrl: '',
-          researchStatus: 'pending',
         },
       ],
     }));
@@ -134,6 +176,23 @@ export default function BDMeetingForm() {
         attendee.id === id ? { ...attendee, [field]: value } : attendee
       ),
     }));
+  };
+
+  const handleResearchSingleAttendee = (attendeeId: string) => {
+    const attendee = formData.attendees.find(a => a.id === attendeeId);
+    if (!attendee || !attendee.name.trim() || !formData.company.trim()) {
+      return;
+    }
+
+    const attendeeToResearch = {
+      name: attendee.name,
+      email: attendee.email || undefined,
+      title: attendee.title || undefined,
+      company: attendee.company || undefined,
+      linkedinUrl: attendee.linkedinUrl || undefined,
+    };
+
+    singleResearchMutation.mutate({ attendeeId, attendee: attendeeToResearch });
   };
 
   const handleResearchAttendees = () => {
@@ -193,8 +252,13 @@ export default function BDMeetingForm() {
   };
 
   const canResearch = formData.company && formData.attendees.some((a) => a.name.trim());
-  const canGenerateReport = formData.attendees.every((a) => a.researchStatus === 'completed');
-  const hasResearchedAttendees = formData.attendees.some((a) => a.researchStatus === 'completed');
+  const canGenerateReport = formData.attendees.every((a) => researchStatus[a.id] === 'completed');
+  const hasResearchedAttendees = formData.attendees.some((a) => researchStatus[a.id] === 'completed');
+
+  // Helper function to get attendee research status
+  const getAttendeeStatus = (attendeeId: string) => researchStatus[attendeeId] || 'pending';
+  const getAttendeeData = (attendeeId: string) => researchData[attendeeId];
+  const canResearchAttendee = (attendee: any) => formData.company.trim() && attendee.name.trim();
 
   return (
     <div className="space-y-6">
@@ -232,57 +296,22 @@ export default function BDMeetingForm() {
             </button>
           </div>
 
-          {/* Step 1: Research Attendees Button */}
+          {/* Step 1: Individual Research */}
           <div className="mb-4 p-4 bg-gradient-to-r from-cro-purple-50 to-cro-blue-50 rounded-2xl border-2 border-cro-purple-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-cro-purple-700 mb-1">
-                  Step 1: Research Attendees
-                </h4>
-                <p className="text-xs text-cro-soft-black-600">
-                  Fill in attendee names below, then click research to auto-populate their
-                  information from HubSpot and the web
-                </p>
-                {!canResearch && (
-                  <p className="text-xs text-red-600 mt-1">
-                    💡 Enter company name and at least one attendee name to enable research
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleResearchAttendees}
-                disabled={!canResearch || researchMutation.isPending}
-                className={clsx(
-                  'flex items-center px-4 py-2 rounded-xl font-medium transition-all',
-                  'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
-                  !canResearch || researchMutation.isPending
-                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed border border-gray-300'
-                    : 'bg-cro-purple-600 text-white hover:bg-cro-purple-700 focus:ring-cro-purple-700 animate-pulse'
-                )}
-                title={
-                  !canResearch ? 'Please enter company name and at least one attendee name' : ''
-                }
-              >
-                {researchMutation.isPending ? (
-                  <>
-                    <LoadingSpinner size="sm" />
-                    <span className="ml-2">Researching...</span>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Research Attendees
-                  </>
-                )}
-              </button>
+            <div>
+              <h4 className="text-sm font-semibold text-cro-purple-700 mb-1">
+                Step 1: Research Attendees Individually
+              </h4>
+              <p className="text-xs text-cro-soft-black-600">
+                Enter company name and attendee details below. Click the "Research" button next to each attendee to auto-populate their information from HubSpot and the web.
+              </p>
+              {hasResearchedAttendees && (
+                <div className="mt-2 flex items-center text-xs text-cro-green-700">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Some attendees researched! HubSpot data has been auto-populated where available.
+                </div>
+              )}
             </div>
-            {hasResearchedAttendees && (
-              <div className="mt-2 flex items-center text-xs text-cro-green-700">
-                <CheckCircle className="w-3 h-3 mr-1" />
-                Research complete! HubSpot data has been auto-populated where available.
-              </div>
-            )}
           </div>
 
           <div className="space-y-4">
@@ -292,14 +321,54 @@ export default function BDMeetingForm() {
                 className="border border-cro-plat-300 rounded-2xl p-4 bg-white"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-medium text-cro-soft-black-700">
-                    Attendee {index + 1}
-                  </h4>
                   <div className="flex items-center space-x-2">
-                    {attendee.researchStatus === 'completed' && (
+                    <h4 className="text-sm font-medium text-cro-soft-black-700">
+                      Attendee {index + 1}
+                    </h4>
+                    {getAttendeeStatus(attendee.id) === 'completed' && (
                       <CheckCircle className="w-4 h-4 text-cro-green-600" />
                     )}
-                    {attendee.researchStatus === 'researching' && <LoadingSpinner size="sm" />}
+                    {getAttendeeStatus(attendee.id) === 'researching' && <LoadingSpinner size="sm" />}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/* Individual Research Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleResearchSingleAttendee(attendee.id)}
+                      disabled={!canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'}
+                      className={clsx(
+                        'flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all',
+                        !canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : getAttendeeStatus(attendee.id) === 'completed'
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      )}
+                      title={
+                        !canResearchAttendee(attendee)
+                          ? 'Enter company name and attendee name to research'
+                          : getAttendeeStatus(attendee.id) === 'completed'
+                            ? 'Re-research this attendee'
+                            : 'Research this attendee'
+                      }
+                    >
+                      {getAttendeeStatus(attendee.id) === 'researching' ? (
+                        <>
+                          <LoadingSpinner size="xs" />
+                          <span className="ml-1">Researching</span>
+                        </>
+                      ) : getAttendeeStatus(attendee.id) === 'completed' ? (
+                        <>
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Re-research
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-3 h-3 mr-1" />
+                          Research
+                        </>
+                      )}
+                    </button>
                     {formData.attendees.length > 1 && (
                       <button
                         type="button"
@@ -376,30 +445,40 @@ export default function BDMeetingForm() {
                   </div>
                 </div>
 
-                {attendee.hubspotStatus && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <span
-                      className={clsx(
-                        'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                        attendee.hubspotStatus === 'found' || attendee.hubspotStatus === 'added'
-                          ? 'bg-cro-green-100 text-cro-green-800'
-                          : 'bg-cro-yellow-100 text-cro-yellow-800'
-                      )}
-                    >
-                      {attendee.hubspotStatus === 'found'
-                        ? '✓ Found in HubSpot'
-                        : attendee.hubspotStatus === 'added'
-                          ? '✓ Added to HubSpot'
-                          : '⚠ Not in HubSpot'}
-                    </span>
-                    {attendee.hubspotStatus === 'not_found' && attendee.email && (
-                      <button
-                        type="button"
-                        onClick={() => handleAddToHubSpot(attendee.id)}
-                        className="text-xs px-3 py-1 bg-cro-blue-700 text-white rounded-full hover:bg-cro-blue-800 transition-colors"
+                {/* Research Results & HubSpot Status */}
+                {getAttendeeStatus(attendee.id) === 'completed' && (
+                  <div className="mt-3 space-y-2">
+                    {/* HubSpot Status */}
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={clsx(
+                          'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+                          getAttendeeData(attendee.id)?.hubspotData
+                            ? 'bg-cro-green-100 text-cro-green-800'
+                            : 'bg-cro-yellow-100 text-cro-yellow-800'
+                        )}
                       >
-                        Add to HubSpot
-                      </button>
+                        {getAttendeeData(attendee.id)?.hubspotData
+                          ? '✓ Found in HubSpot'
+                          : '⚠ Not in HubSpot'}
+                      </span>
+                      {!getAttendeeData(attendee.id)?.hubspotData && attendee.email && (
+                        <button
+                          type="button"
+                          onClick={() => handleAddToHubSpot(attendee.id)}
+                          className="text-xs px-3 py-1 bg-cro-blue-700 text-white rounded-full hover:bg-cro-blue-800 transition-colors"
+                        >
+                          Add to HubSpot
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Research Summary */}
+                    {getAttendeeData(attendee.id)?.searchResults && (
+                      <div className="text-xs text-gray-600">
+                        ✓ Found {getAttendeeData(attendee.id).searchResults.length} research results
+                        {getAttendeeData(attendee.id)?.linkedinUrl && ' • LinkedIn profile found'}
+                      </div>
                     )}
                   </div>
                 )}
@@ -447,8 +526,8 @@ export default function BDMeetingForm() {
               </h4>
               <p className="text-xs text-cro-soft-black-600">
                 {canGenerateReport
-                  ? 'All attendees researched! Click to generate your BD intelligence report.'
-                  : 'Complete attendee research first before generating the report.'}
+                  ? 'All attendees researched! Click to generate your comprehensive BD intelligence report.'
+                  : 'Research all attendees individually using the buttons above, then generate your report.'}
               </p>
             </div>
             <button
@@ -486,14 +565,16 @@ export default function BDMeetingForm() {
       </div>
 
       {/* Error Display */}
-      {(researchMutation.isError || generateMutation.isError) && (
+      {(singleResearchMutation.isError || researchMutation.isError || generateMutation.isError) && (
         <ErrorMessage
           message={
+            singleResearchMutation.error?.message ||
             researchMutation.error?.message ||
             generateMutation.error?.message ||
             'An error occurred'
           }
           onClose={() => {
+            singleResearchMutation.reset();
             researchMutation.reset();
             generateMutation.reset();
           }}

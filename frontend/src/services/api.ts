@@ -66,6 +66,10 @@ class ApiService {
   }
 
   // BD operations
+  async researchSingleAttendee(company: string, attendee: Attendee): Promise<ApiResponse<{ attendee: any; company: string }>> {
+    return this.client.post('/bd/research-attendee', { company, attendee });
+  }
+
   async researchAttendees(request: BDMeetingRequest): Promise<ApiResponse<BDResearchData>> {
     return this.client.post('/bd/research-attendees', request);
   }
