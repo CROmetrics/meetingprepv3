@@ -16,8 +16,13 @@ class ApiService {
   private client: AxiosInstance;
 
   constructor() {
+    // Use different base URLs for development and production
+    const baseURL = import.meta.env.DEV
+      ? '/api' // Use relative path to leverage Vite proxy in development
+      : 'https://meetingprepv3-production.up.railway.app/api'; // Direct URL for production
+
     this.client = axios.create({
-      baseURL: '/api', // Use relative path to leverage Vite proxy
+      baseURL,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -112,7 +117,7 @@ class ApiService {
   // Customer Research operations
   async searchCompanies(query: string): Promise<ApiResponse<HubSpotCompany[]>> {
     return this.client.get('/research/companies/search', {
-      params: { query }
+      params: { query },
     });
   }
 
@@ -125,12 +130,16 @@ class ApiService {
   }
 
   async generateResearch(companyId: string, prompt: string): Promise<ApiResponse<ResearchReport>> {
-    return this.client.post('/research/generate', {
-      companyId,
-      prompt
-    }, {
-      timeout: 180000, // 3 minutes for research generation
-    });
+    return this.client.post(
+      '/research/generate',
+      {
+        companyId,
+        prompt,
+      },
+      {
+        timeout: 180000, // 3 minutes for research generation
+      }
+    );
   }
 
   async getResearchPrompt(): Promise<ApiResponse<{ prompt: string }>> {

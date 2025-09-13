@@ -10,8 +10,14 @@ const envSchema = z.object({
   // OpenAI Configuration
   OPENAI_API_KEY: z.string().min(1, 'OpenAI API key is required'),
   OPENAI_MODEL: z.string().default('gpt-4-turbo-preview'),
-  STRUCTURED_OUTPUT: z.enum(['0', '1']).default('0').transform(val => val === '1'),
-  SELF_CRITIQUE: z.enum(['0', '1']).default('1').transform(val => val === '1'),
+  STRUCTURED_OUTPUT: z
+    .enum(['0', '1'])
+    .default('0')
+    .transform((val) => val === '1'),
+  SELF_CRITIQUE: z
+    .enum(['0', '1'])
+    .default('1')
+    .transform((val) => val === '1'),
 
   // Slack Configuration
   SLACK_TOKEN: z.string().optional(),
@@ -25,7 +31,7 @@ const envSchema = z.object({
   // Google Calendar API Configuration
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3001/api/auth/google/callback'),
+  GOOGLE_REDIRECT_URI: z.string().default('http://localhost:3001/api/calendar/callback'),
 
   // People Data Labs API Configuration
   PEOPLEDATALABS_API_KEY: z.string().optional(),
