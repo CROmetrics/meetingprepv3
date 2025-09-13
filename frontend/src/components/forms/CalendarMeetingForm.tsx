@@ -104,50 +104,60 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
   };
 
   const populateManualResearch = (event: CalendarEvent) => {
-    // Extract company names from attendee domains
-    const companyDomains = new Set<string>();
-    event.attendees.forEach(attendee => {
-      const domain = attendee.email.split('@')[1];
-      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
-        companyDomains.add(domain);
-      }
-    });
+    console.log('populateManualResearch called with event:', event.summary);
 
-    // Convert attendees to manual research format
-    const attendees = event.attendees.map((attendee, index) => {
-      const domain = attendee.email.split('@')[1];
-      let companyName = '';
+    try {
+      // Extract company names from attendee domains
+      const companyDomains = new Set<string>();
+      event.attendees.forEach(attendee => {
+        const domain = attendee.email.split('@')[1];
+        if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
+          companyDomains.add(domain);
+        }
+      });
 
-      // Try to extract company name from domain
-      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
-        companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
-      }
+      // Convert attendees to manual research format
+      const attendees = event.attendees.map((attendee, index) => {
+        const domain = attendee.email.split('@')[1];
+        let companyName = '';
 
-      return {
-        id: (index + 1).toString(),
-        name: attendee.displayName || '',
-        email: attendee.email,
-        title: '',
-        company: companyName,
-        linkedinUrl: '',
+        // Try to extract company name from domain
+        if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
+          companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+        }
+
+        return {
+          id: (index + 1).toString(),
+          name: attendee.displayName || '',
+          email: attendee.email,
+          title: '',
+          company: companyName,
+          linkedinUrl: '',
+        };
+      });
+
+      // Create the form data
+      const formData = {
+        company: Array.from(companyDomains).map(domain =>
+          domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
+        ).join(', ') || 'Meeting Company',
+        purpose: event.summary,
+        additionalContext: event.description || `Meeting scheduled for ${new Date(event.start.dateTime).toLocaleString()}${event.location ? ` at ${event.location}` : ''}`,
+        attendees,
       };
-    });
 
-    // Create the form data
-    const formData = {
-      company: Array.from(companyDomains).map(domain =>
-        domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
-      ).join(', ') || 'Meeting Company',
-      purpose: event.summary,
-      additionalContext: event.description || `Meeting scheduled for ${new Date(event.start.dateTime).toLocaleString()}${event.location ? ` at ${event.location}` : ''}`,
-      attendees,
-    };
+      console.log('Form data to be stored:', formData);
 
-    // Store in localStorage for the manual research form
-    localStorage.setItem('bdMeetingForm', JSON.stringify(formData));
+      // Store in localStorage for the manual research form
+      localStorage.setItem('bdMeetingForm', JSON.stringify(formData));
+      console.log('Data stored in localStorage');
 
-    // Navigate to manual research interface
-    navigate('/');
+      // Navigate to manual research interface
+      console.log('Navigating to /');
+      navigate('/');
+    } catch (error) {
+      console.error('Error in populateManualResearch:', error);
+    }
   };
 
   return (
@@ -277,7 +287,14 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
         {selectedEvent && (
           <div>
             <button
-              onClick={() => populateManualResearch(selectedEvent)}
+              onClick={() => {
+                console.log('Research button clicked, selectedEvent:', selectedEvent);
+                if (selectedEvent) {
+                  populateManualResearch(selectedEvent);
+                } else {
+                  console.error('No selected event');
+                }
+              }}
               className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Research This Meeting
