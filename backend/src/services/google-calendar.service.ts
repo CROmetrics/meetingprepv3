@@ -94,23 +94,15 @@ class GoogleCalendarService {
    */
   async getAccessToken(code: string): Promise<{ access_token: string; refresh_token?: string }> {
     const client = this.ensureClient();
-    
+
     try {
-      // Use promisify to convert callback to Promise
-      const { tokens } = await new Promise<{ tokens: any }>((resolve, reject) => {
-        (client as any).getAccessToken(code, (err: any, tokens: any) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({ tokens });
-          }
-        });
-      });
-      
+      // Use modern async/await approach instead of deprecated callback
+      const { tokens } = await client.getToken(code);
+
       client.setCredentials(tokens);
-      
+
       logger.info('Successfully obtained Google Calendar access tokens');
-      
+
       return {
         access_token: tokens.access_token!,
         refresh_token: tokens.refresh_token || undefined
