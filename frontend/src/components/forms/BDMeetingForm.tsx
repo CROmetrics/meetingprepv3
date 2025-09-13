@@ -13,14 +13,14 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
-import { BDMeetingRequest, Attendee, BDMeetingFormData } from '../../types';
+import { BDMeetingRequest, Attendee, BDMeetingFormData, BDMeetingFormDataSimple, AttendeeWithId } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import ReactMarkdown from 'react-markdown';
 
 export default function BDMeetingForm() {
-  const [formData, setFormData] = useLocalStorage<BDMeetingFormData>('bdMeetingForm', {
+  const [formData, setFormData] = useLocalStorage<BDMeetingFormDataSimple>('bdMeetingForm', {
     company: '',
     purpose: '',
     additionalContext: '',
@@ -73,7 +73,7 @@ export default function BDMeetingForm() {
         }));
       }
     },
-    onError: (error, { attendeeId }) => {
+    onError: (_, { attendeeId }) => {
       setResearchStatus(prev => ({ ...prev, [attendeeId]: 'pending' }));
     },
   });
@@ -169,7 +169,7 @@ export default function BDMeetingForm() {
     }));
   };
 
-  const updateAttendee = (id: string, field: keyof Attendee, value: string) => {
+  const updateAttendee = (id: string, field: keyof AttendeeWithId, value: string) => {
     setFormData((prev) => ({
       ...prev,
       attendees: prev.attendees.map((attendee) =>
@@ -195,29 +195,6 @@ export default function BDMeetingForm() {
     singleResearchMutation.mutate({ attendeeId, attendee: attendeeToResearch });
   };
 
-  const handleResearchAttendees = () => {
-    const request: BDMeetingRequest = {
-      company: formData.company,
-      attendees: formData.attendees.map(
-        ({
-          id: _id,
-          researchStatus: _researchStatus,
-          hubspotStatus: _hubspotStatus,
-          ...attendee
-        }) => attendee
-      ),
-      purpose: formData.purpose,
-      additionalContext: formData.additionalContext,
-    };
-
-    // Set all attendees to researching status
-    setFormData((prev) => ({
-      ...prev,
-      attendees: prev.attendees.map((a) => ({ ...a, researchStatus: 'researching' })),
-    }));
-
-    researchMutation.mutate(request);
-  };
 
   const handleGenerateReport = () => {
     const request: BDMeetingRequest = {
@@ -251,7 +228,6 @@ export default function BDMeetingForm() {
     addToHubSpotMutation.mutate([attendeeToAdd]);
   };
 
-  const canResearch = formData.company && formData.attendees.some((a) => a.name.trim());
   const canGenerateReport = formData.attendees.every((a) => researchStatus[a.id] === 'completed');
   const hasResearchedAttendees = formData.attendees.some((a) => researchStatus[a.id] === 'completed');
 
@@ -354,7 +330,7 @@ export default function BDMeetingForm() {
                     >
                       {getAttendeeStatus(attendee.id) === 'researching' ? (
                         <>
-                          <LoadingSpinner size="xs" />
+                          <LoadingSpinner size="sm" />
                           <span className="ml-1">Researching</span>
                         </>
                       ) : getAttendeeStatus(attendee.id) === 'completed' ? (

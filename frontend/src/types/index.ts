@@ -19,11 +19,22 @@ export interface AttendeeWithStatus extends Attendee {
   hubspotStatus?: 'not_found' | 'found' | 'added';
 }
 
+export interface AttendeeWithId extends Attendee {
+  id: string;
+}
+
 export interface BDMeetingFormData {
   company: string;
   purpose?: string;
   additionalContext?: string;
   attendees: AttendeeWithStatus[];
+}
+
+export interface BDMeetingFormDataSimple {
+  company: string;
+  purpose?: string;
+  additionalContext?: string;
+  attendees: AttendeeWithId[];
 }
 
 export interface ApiResponse<T = unknown> {
