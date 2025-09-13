@@ -10,6 +10,9 @@ import {
   Search,
   CheckCircle,
   RefreshCw,
+  Calendar,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
@@ -17,6 +20,7 @@ import { BDMeetingRequest, Attendee, BDMeetingFormDataSimple, AttendeeWithId } f
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
+import { useCalendarIntegration } from '../../hooks/useCalendarIntegration';
 import ReactMarkdown from 'react-markdown';
 
 export default function BDMeetingForm() {
@@ -35,6 +39,21 @@ export default function BDMeetingForm() {
       },
     ],
   });
+
+  // Calendar integration
+  const {
+    hasTokens,
+    events,
+    loadingEvents,
+    expandedEvent,
+    setExpandedEvent,
+    fetchEvents,
+    connectCalendar,
+    formatDateTime,
+    getDurationMinutes,
+    extractMeetingData,
+    hasEvents,
+  } = useCalendarIntegration();
 
   // Track research status and data separately (not persisted to localStorage)
   const [researchData, setResearchData] = useState<Record<string, any>>({});
@@ -260,8 +279,131 @@ export default function BDMeetingForm() {
     }
   };
 
+  // Function to populate form with calendar event data
+  const handleLoadMeetingDetails = (event: any) => {
+    const meetingData = extractMeetingData(event);
+    setFormData(meetingData);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Calendar Integration Section */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-cro-blue-50 to-cro-purple-50 rounded-2xl border-2 border-cro-blue-200">
+        <div className="flex items-center gap-3 mb-3">
+          <Calendar className="w-5 h-5 text-cro-blue-600" />
+          <h3 className="text-lg font-semibold text-cro-blue-700">
+            Calendar Integration
+          </h3>
+          <span className="text-sm text-cro-soft-black-600">(Optional)</span>
+        </div>
+        <p className="text-sm text-cro-soft-black-600 mb-4">
+          Connect your Google Calendar to automatically populate meeting details, or fill out the form manually below.
+        </p>
+
+        {!hasTokens ? (
+          <button
+            onClick={connectCalendar}
+            className="flex items-center gap-2 px-4 py-2 bg-cro-blue-600 text-white rounded-xl font-medium hover:bg-cro-blue-700 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            Connect Google Calendar
+          </button>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchEvents}
+                disabled={loadingEvents}
+                className="flex items-center gap-2 px-4 py-2 bg-cro-blue-600 text-white rounded-xl font-medium hover:bg-cro-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {loadingEvents ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Calendar className="w-4 h-4" />
+                )}
+                {loadingEvents ? 'Loading...' : 'Load Upcoming Meetings'}
+              </button>
+              {hasEvents && (
+                <span className="text-sm text-cro-green-600">
+                  ✓ Found {events.length} upcoming meetings
+                </span>
+              )}
+            </div>
+
+            {hasEvents && (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                <h4 className="text-sm font-medium text-cro-soft-black-700">Select a meeting to auto-populate details:</h4>
+                {events.map((event) => {
+                  const { date, time } = formatDateTime(event.start.dateTime);
+                  const duration = getDurationMinutes(event.start.dateTime, event.end.dateTime);
+                  const isExpanded = expandedEvent === event.id;
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="border border-cro-plat-200 rounded-lg p-3 bg-white hover:bg-cro-plat-50 transition-colors"
+                    >
+                      <div
+                        className="flex items-center justify-between cursor-pointer"
+                        onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3">
+                            <div className="text-xs text-cro-soft-black-500">
+                              <div>{date}</div>
+                              <div>{time}</div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-medium text-cro-soft-black-900 truncate text-sm">
+                                {event.summary}
+                              </h5>
+                              <div className="flex items-center gap-3 text-xs text-cro-soft-black-500">
+                                <span>{duration} min</span>
+                                <span>{event.attendees.length} attendees</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLoadMeetingDetails(event);
+                            }}
+                            className="px-3 py-1 bg-cro-green-600 text-white rounded-lg text-xs font-medium hover:bg-cro-green-700 transition-colors"
+                          >
+                            Load Details
+                          </button>
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-cro-soft-black-400" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-cro-soft-black-400" />
+                          )}
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="mt-3 pt-3 border-t border-cro-plat-200 text-xs text-cro-soft-black-600">
+                          {event.description && (
+                            <div className="mb-2">
+                              <strong>Description:</strong> {event.description}
+                            </div>
+                          )}
+                          <div>
+                            <strong>Attendees:</strong> {event.attendees.slice(0, 3).map(a => a.displayName || a.email).join(', ')}
+                            {event.attendees.length > 3 && ` +${event.attendees.length - 3} more`}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-6">
         {/* Company Information */}
         <div>

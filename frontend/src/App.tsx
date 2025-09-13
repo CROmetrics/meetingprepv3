@@ -18,6 +18,7 @@ function App() {
             </Layout>
           } />
           <Route path="/research" element={<CustomerResearchPage />} />
+          {/* Keep calendar page for OAuth callback handling */}
           <Route path="/calendar" element={<CalendarPage />} />
         </Routes>
       </Router>

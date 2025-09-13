@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Layout } from '../layout/Layout';
-import { CalendarMeetingForm } from '../forms/CalendarMeetingForm';
 import { calendarApi, CalendarTokens } from '../../services/calendar.api';
 
 export function CalendarPage() {
@@ -29,13 +28,13 @@ export function CalendarPage() {
       // Store tokens for future use
       calendarApi.storeTokens(newTokens);
 
-      // Clean up URL parameters
-      navigate('/calendar', { replace: true });
+      // Redirect to main page after successful connection
+      navigate('/', { replace: true });
     } else if (status === 'error' || errorParam) {
       setAuthStatus('error');
       setError(errorParam || 'Authentication failed');
 
-      // Clean up URL parameters
+      // Stay on calendar page to show error and retry option
       navigate('/calendar', { replace: true });
     } else {
       // Check if we have stored tokens
@@ -43,6 +42,8 @@ export function CalendarPage() {
       if (storedTokens) {
         setTokens(storedTokens);
         setAuthStatus('success');
+        // Redirect to main page if already connected
+        navigate('/', { replace: true });
       }
     }
   }, [searchParams, navigate]);
@@ -133,9 +134,13 @@ export function CalendarPage() {
           </div>
         )}
 
-        {/* Calendar Meeting Form - only show if authenticated */}
+        {/* Redirect message for successful connections */}
         {authStatus === 'success' && tokens && (
-          <CalendarMeetingForm />
+          <div className="text-center">
+            <p className="text-cro-soft-black-600">
+              Redirecting you back to the meeting research page...
+            </p>
+          </div>
         )}
       </div>
     </Layout>
