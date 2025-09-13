@@ -47,7 +47,7 @@ export default function BDMeetingForm() {
           const researched = researchedAttendees.find(
             (r: unknown) => (r as { name: string }).name === attendee.name
           );
-          
+
           // Auto-populate from HubSpot data if found
           if (researched?.hubspotData) {
             const hubspotData = researched.hubspotData as {
@@ -61,12 +61,13 @@ export default function BDMeetingForm() {
               email: attendee.email || hubspotData.email || '',
               title: attendee.title || hubspotData.jobtitle || '',
               company: attendee.company || hubspotData.company || '',
-              linkedinUrl: attendee.linkedinUrl || hubspotData.linkedin_url || researched.linkedinUrl || '',
+              linkedinUrl:
+                attendee.linkedinUrl || hubspotData.linkedin_url || researched.linkedinUrl || '',
               researchStatus: 'completed' as const,
               hubspotStatus: 'found' as const,
             };
           }
-          
+
           return {
             ...attendee,
             linkedinUrl: attendee.linkedinUrl || researched?.linkedinUrl || '',
@@ -239,20 +240,29 @@ export default function BDMeetingForm() {
                   Step 1: Research Attendees
                 </h4>
                 <p className="text-xs text-cro-soft-black-600">
-                  Fill in attendee names below, then click research to auto-populate their information from HubSpot and the web
+                  Fill in attendee names below, then click research to auto-populate their
+                  information from HubSpot and the web
                 </p>
+                {!canResearch && (
+                  <p className="text-xs text-red-600 mt-1">
+                    💡 Enter company name and at least one attendee name to enable research
+                  </p>
+                )}
               </div>
               <button
                 type="button"
                 onClick={handleResearchAttendees}
                 disabled={!canResearch || researchMutation.isPending}
                 className={clsx(
-                  'flex items-center px-4 py-2 rounded-xl font-medium text-white transition-all',
+                  'flex items-center px-4 py-2 rounded-xl font-medium transition-all',
                   'shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2',
                   !canResearch || researchMutation.isPending
-                    ? 'bg-cro-plat-300 cursor-not-allowed'
-                    : 'bg-cro-purple-600 hover:bg-cro-purple-700 focus:ring-cro-purple-700 animate-pulse'
+                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed border border-gray-300'
+                    : 'bg-cro-purple-600 text-white hover:bg-cro-purple-700 focus:ring-cro-purple-700 animate-pulse'
                 )}
+                title={
+                  !canResearch ? 'Please enter company name and at least one attendee name' : ''
+                }
               >
                 {researchMutation.isPending ? (
                   <>
@@ -436,9 +446,9 @@ export default function BDMeetingForm() {
                 Step 2: Generate Intelligence Report
               </h4>
               <p className="text-xs text-cro-soft-black-600">
-                {canGenerateReport 
-                  ? "All attendees researched! Click to generate your BD intelligence report."
-                  : "Complete attendee research first before generating the report."}
+                {canGenerateReport
+                  ? 'All attendees researched! Click to generate your BD intelligence report.'
+                  : 'Complete attendee research first before generating the report.'}
               </p>
             </div>
             <button
