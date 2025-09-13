@@ -4,7 +4,7 @@ import BDMeetingForm from '../forms/BDMeetingForm';
 import { CalendarMeetingForm } from '../forms/CalendarMeetingForm';
 import { CustomerResearch } from '../pages/CustomerResearch';
 import { MobileBriefView } from './MobileBriefView';
-import { calendarApi, MeetingBriefResponse } from '../../services/calendar.api';
+import { MeetingBriefResponse } from '../../services/calendar.api';
 
 type TabType = 'calendar' | 'bd' | 'research';
 
