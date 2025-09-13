@@ -293,16 +293,12 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
         {selectedEvent && (
           <div>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                alert('Button clicked!'); // Simple alert to test
-                console.log('BUTTON CLICKED - Research button clicked, selectedEvent:', selectedEvent);
-                if (selectedEvent) {
+              onClick={() => {
+                try {
+                  console.log('Button clicked');
                   populateManualResearch(selectedEvent);
-                } else {
-                  console.error('No selected event');
-                  alert('No selected event');
+                } catch (error) {
+                  console.error('Button click error:', error);
                 }
               }}
               type="button"
