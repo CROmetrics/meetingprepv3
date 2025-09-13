@@ -148,10 +148,7 @@ export function MeetingPrepPage() {
           {/* Tab Content */}
           <div className="bg-white rounded-lg shadow-sm border">
             {activeTab === 'calendar' && (
-              <CalendarMeetingForm 
-                onGenerateBrief={handleGenerateCalendarBrief}
-                loading={loading}
-              />
+              <CalendarMeetingForm />
             )}
             
             {activeTab === 'bd' && (

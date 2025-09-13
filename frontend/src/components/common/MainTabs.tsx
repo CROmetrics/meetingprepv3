@@ -136,10 +136,7 @@ export const MainTabs: React.FC<MainTabsProps> = () => {
       {/* Tab Content */}
       <div className={activeTab === 'research' ? '' : 'bg-white rounded-lg shadow-sm border'}>
         {activeTab === 'calendar' && (
-          <CalendarMeetingForm 
-            onGenerateBrief={handleGenerateCalendarBrief}
-            loading={loading}
-          />
+          <CalendarMeetingForm />
         )}
         
         {activeTab === 'bd' && (
