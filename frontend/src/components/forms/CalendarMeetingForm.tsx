@@ -176,7 +176,8 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
       }
     } catch (error) {
       console.error('Error in populateManualResearch:', error);
-      alert(`Error preparing meeting research: ${error.message || 'Unknown error occurred'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Error preparing meeting research: ${errorMessage}`);
     } finally {
       setProcessingResearch(false);
     }
