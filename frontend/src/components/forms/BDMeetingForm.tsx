@@ -42,7 +42,7 @@ export default function BDMeetingForm() {
 
   // Individual attendee research mutation
   const singleResearchMutation = useMutation({
-    mutationFn: ({ attendeeId, attendee }: { attendeeId: string; attendee: any }) =>
+    mutationFn: ({ attendee }: { attendeeId: string; attendee: any }) =>
       api.researchSingleAttendee(formData.company, attendee),
     onMutate: ({ attendeeId }) => {
       setResearchStatus(prev => ({ ...prev, [attendeeId]: 'researching' }));
