@@ -39,6 +39,7 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [processingResearch, setProcessingResearch] = useState(false);
 
 
   // Load stored tokens on component mount
@@ -103,8 +104,9 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
     return Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
   };
 
-  const populateManualResearch = (event: CalendarEvent) => {
+  const populateManualResearch = async (event: CalendarEvent) => {
     console.log('populateManualResearch called with event:', event.summary);
+    setProcessingResearch(true);
 
     try {
       // Extract company names from attendee domains
@@ -152,6 +154,17 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
       localStorage.setItem('bdMeetingForm', JSON.stringify(formData));
       console.log('Data stored in localStorage');
 
+      // Verify the data was stored correctly
+      const storedData = localStorage.getItem('bdMeetingForm');
+      if (!storedData) {
+        throw new Error('Failed to store data in localStorage');
+      }
+
+      console.log('Data verified in localStorage:', JSON.parse(storedData));
+
+      // Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       // Navigate to manual research interface
       console.log('Navigating to /');
       try {
@@ -163,6 +176,9 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
       }
     } catch (error) {
       console.error('Error in populateManualResearch:', error);
+      alert(`Error preparing meeting research: ${error.message || 'Unknown error occurred'}`);
+    } finally {
+      setProcessingResearch(false);
     }
   };
 
@@ -173,13 +189,28 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
           Calendar Meeting Brief Generator
         </h2>
 
-        {/* Load Events */}
-        {tokens && (
+        {/* Connect Calendar or Load Events */}
+        {!tokens ? (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-3">
+              1. Connect Your Calendar
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Connect your Google Calendar to access and research your upcoming meetings.
+            </p>
+            <button
+              onClick={() => navigate('/calendar')}
+              className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-medium"
+            >
+              Connect Google Calendar
+            </button>
+          </div>
+        ) : (
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">
               1. Load Your Meetings
             </h3>
-            
+
             <button
               onClick={fetchEvents}
               disabled={loadingEvents}
@@ -302,9 +333,20 @@ export const CalendarMeetingForm: React.FC<CalendarMeetingFormProps> = () => {
                 }
               }}
               type="button"
-              className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium"
+              disabled={processingResearch}
+              className="w-full bg-blue-600 text-white px-6 py-4 rounded-md hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Research This Meeting
+              {processingResearch ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Preparing Research...
+                </div>
+              ) : (
+                'Research This Meeting'
+              )}
             </button>
             <p className="text-sm text-gray-500 mt-2 text-center">
               This will populate the manual research interface with meeting details
