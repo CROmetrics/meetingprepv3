@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
-import { BDMeetingRequest, Attendee, BDMeetingFormData, BDMeetingFormDataSimple, AttendeeWithId } from '../../types';
+import { BDMeetingRequest, Attendee, BDMeetingFormDataSimple, AttendeeWithId } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
@@ -78,49 +78,6 @@ export default function BDMeetingForm() {
     },
   });
 
-  // Research attendees mutation
-  const researchMutation = useMutation({
-    mutationFn: (data: BDMeetingRequest) => api.researchAttendees(data),
-    onSuccess: (response) => {
-      // Update attendees with research status and auto-populate HubSpot data
-      const researchedAttendees = response.data?.attendees || [];
-      setFormData((prev) => ({
-        ...prev,
-        attendees: prev.attendees.map((attendee) => {
-          const researched = researchedAttendees.find(
-            (r: unknown) => (r as { name: string }).name === attendee.name
-          );
-
-          // Auto-populate from HubSpot data if found
-          if (researched?.hubspotData) {
-            const hubspotData = researched.hubspotData as {
-              email?: string;
-              jobtitle?: string;
-              company?: string;
-              linkedin_url?: string;
-            };
-            return {
-              ...attendee,
-              email: attendee.email || hubspotData.email || '',
-              title: attendee.title || hubspotData.jobtitle || '',
-              company: attendee.company || hubspotData.company || '',
-              linkedinUrl:
-                attendee.linkedinUrl || hubspotData.linkedin_url || researched.linkedinUrl || '',
-              researchStatus: 'completed' as const,
-              hubspotStatus: 'found' as const,
-            };
-          }
-
-          return {
-            ...attendee,
-            linkedinUrl: attendee.linkedinUrl || researched?.linkedinUrl || '',
-            researchStatus: 'completed' as const,
-            hubspotStatus: 'not_found' as const,
-          };
-        }),
-      }));
-    },
-  });
 
   // Generate BD report mutation
   const generateMutation = useMutation({
@@ -200,12 +157,7 @@ export default function BDMeetingForm() {
     const request: BDMeetingRequest = {
       company: formData.company,
       attendees: formData.attendees.map(
-        ({
-          id: _id,
-          researchStatus: _researchStatus,
-          hubspotStatus: _hubspotStatus,
-          ...attendee
-        }) => attendee
+        ({ id: _, ...attendee }) => attendee
       ),
       purpose: formData.purpose,
       additionalContext: formData.additionalContext,
@@ -541,17 +493,15 @@ export default function BDMeetingForm() {
       </div>
 
       {/* Error Display */}
-      {(singleResearchMutation.isError || researchMutation.isError || generateMutation.isError) && (
+      {(singleResearchMutation.isError || generateMutation.isError) && (
         <ErrorMessage
           message={
             singleResearchMutation.error?.message ||
-            researchMutation.error?.message ||
             generateMutation.error?.message ||
             'An error occurred'
           }
           onClose={() => {
             singleResearchMutation.reset();
-            researchMutation.reset();
             generateMutation.reset();
           }}
         />
@@ -732,45 +682,6 @@ export default function BDMeetingForm() {
             </div>
 
             {/* Add to HubSpot Section */}
-            {formData.attendees.some((a) => a.hubspotStatus === 'not_found') && (
-              <div className="mt-6 p-4 bg-cro-yellow-50 rounded-xl border border-cro-yellow-200">
-                <h4 className="text-lg font-medium text-cro-yellow-800 mb-3">
-                  Add Contacts to HubSpot
-                </h4>
-                <p className="text-sm text-cro-yellow-700 mb-3">
-                  Some attendees were not found in HubSpot. Would you like to add them?
-                </p>
-                <button
-                  onClick={() => {
-                    const attendeesToAdd = formData.attendees
-                      .filter((a) => a.hubspotStatus === 'not_found')
-                      .map(
-                        ({
-                          id: _id,
-                          researchStatus: _researchStatus,
-                          hubspotStatus: _hubspotStatus,
-                          ...attendee
-                        }) => attendee
-                      );
-                    api
-                      .addToHubSpot(attendeesToAdd)
-                      .then(() => {
-                        alert('Contacts added to HubSpot successfully!');
-                        setFormData((prev) => ({
-                          ...prev,
-                          attendees: prev.attendees.map((a) =>
-                            a.hubspotStatus === 'not_found' ? { ...a, hubspotStatus: 'added' } : a
-                          ),
-                        }));
-                      })
-                      .catch((error) => alert('Failed to add contacts: ' + error.message));
-                  }}
-                  className="px-4 py-2 bg-cro-yellow-600 text-white rounded-xl hover:bg-cro-yellow-700 transition-colors text-sm font-medium"
-                >
-                  Add to HubSpot
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
