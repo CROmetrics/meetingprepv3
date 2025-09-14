@@ -295,12 +295,20 @@ export default function BDMeetingForm() {
 
   // Function to research all attendees automatically
   const researchAllAttendees = async (attendees: any[], company: string) => {
-    // Only research attendees with names and valid email domains (not personal email)
-    const attendeesToResearch = attendees.filter(attendee =>
-      attendee.name.trim() &&
-      attendee.email &&
-      !['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com'].includes(attendee.email.split('@')[1]?.toLowerCase())
-    );
+    // Define domains to exclude from research (personal emails + CROmetrics)
+    const excludedDomains = [
+      'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
+      'crometrics.com', 'cro-metrics.com' // Don't research CROmetrics employees
+    ];
+
+    // Only research external attendees with names and valid email domains
+    const attendeesToResearch = attendees.filter(attendee => {
+      const domain = attendee.email?.split('@')[1]?.toLowerCase();
+      return attendee.name.trim() &&
+             attendee.email &&
+             domain &&
+             !excludedDomains.some(excluded => domain.includes(excluded));
+    });
 
     // Trigger research for each attendee sequentially to avoid overwhelming the API
     for (const attendee of attendeesToResearch) {

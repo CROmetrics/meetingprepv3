@@ -119,39 +119,55 @@ export function useCalendarIntegration() {
   };
 
   const extractMeetingData = (event: CalendarEvent) => {
-    // Extract company names from attendee domains
+    // Define CROmetrics domains and other internal/personal domains to exclude
+    const excludedDomains = [
+      'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
+      'crometrics.com', 'cro-metrics.com' // CROmetrics domains
+    ];
+
+    // Extract company names from attendee domains (excluding CROmetrics and personal emails)
     const companyDomains = new Set<string>();
     event.attendees.forEach(attendee => {
-      const domain = attendee.email.split('@')[1];
-      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
+      const domain = attendee.email.split('@')[1]?.toLowerCase();
+      if (domain && !excludedDomains.some(excluded => domain.includes(excluded))) {
         companyDomains.add(domain);
       }
     });
 
-    // Convert attendees to form format
-    const attendees = event.attendees.map((attendee, index) => {
-      const domain = attendee.email.split('@')[1];
-      let companyName = '';
+    // Convert attendees to form format (only include external attendees for research)
+    const attendees = event.attendees
+      .filter(attendee => {
+        // Include all attendees in the form, but they'll be filtered for research later
+        return attendee.displayName || attendee.email;
+      })
+      .map((attendee, index) => {
+        const domain = attendee.email.split('@')[1]?.toLowerCase();
+        let companyName = '';
 
-      // Try to extract company name from domain
-      if (domain && !domain.includes('gmail.com') && !domain.includes('outlook.com') && !domain.includes('yahoo.com')) {
-        companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
-      }
+        // Try to extract company name from domain (excluding internal/personal domains)
+        if (domain && !excludedDomains.some(excluded => domain.includes(excluded))) {
+          companyName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
+        }
 
-      return {
-        id: (index + 1).toString(),
-        name: attendee.displayName || '',
-        email: attendee.email,
-        title: '',
-        company: companyName,
-        linkedinUrl: '',
-      };
-    });
+        return {
+          id: (index + 1).toString(),
+          name: attendee.displayName || '',
+          email: attendee.email,
+          title: '',
+          company: companyName,
+          linkedinUrl: '',
+        };
+      });
+
+    // Determine target company (exclude CROmetrics)
+    const targetCompanyDomains = Array.from(companyDomains).filter(domain =>
+      !domain.includes('crometrics.com') && !domain.includes('cro-metrics.com')
+    );
 
     return {
-      company: Array.from(companyDomains).map(domain =>
+      company: targetCompanyDomains.map(domain =>
         domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1)
-      ).join(', ') || 'Meeting Company',
+      ).join(', ') || 'External Company',
       purpose: event.summary,
       additionalContext: event.description || `Meeting scheduled for ${new Date(event.start.dateTime).toLocaleString()}${event.location ? ` at ${event.location}` : ''}`,
       attendees,
