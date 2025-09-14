@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { CompanySearchForm } from '../forms/CompanySearchForm';
+import { CompanyResearchForm } from '../forms/CompanyResearchForm';
 import { PromptEditor } from '../forms/PromptEditor';
 import { CompanyDataPreview } from '../common/CompanyDataPreview';
 import { ResearchResults, ResearchError } from '../common/ResearchResults';
-import { 
+import {
   MagnifyingGlassIcon,
   SparklesIcon,
   EyeIcon,
@@ -19,6 +20,7 @@ export function CustomerResearch() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDataPreview, setShowDataPreview] = useState(false);
+  const [searchMode, setSearchMode] = useState<'hubspot' | 'research'>('hubspot');
 
   const handleCompanySelect = (company: HubSpotCompany) => {
     setSelectedCompany(company);
@@ -64,8 +66,8 @@ export function CustomerResearch() {
           Customer Research
         </h1>
         <p className="text-lg text-cro-purple-700 max-w-3xl mx-auto">
-          Search for companies in HubSpot, customize your research prompt, and generate 
-          AI-powered intelligence reports to better understand your prospects.
+          Search for companies in HubSpot or research new prospects with People Data Labs,
+          customize your research prompt, and generate AI-powered intelligence reports to better understand your prospects.
         </p>
       </div>
 
@@ -134,14 +136,57 @@ export function CustomerResearch() {
         <div className="space-y-6">
           {/* Company Search */}
           <div className="bg-white border border-cro-plat-300 rounded-xl p-6">
-            <h2 className="text-xl font-bold text-cro-soft-black-700 mb-4">
-              1. Select Company
-            </h2>
-            <CompanySearchForm
-              onCompanySelect={handleCompanySelect}
-              selectedCompany={selectedCompany}
-              isLoading={isGenerating}
-            />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-cro-soft-black-700">
+                1. Select Company
+              </h2>
+
+              <div className="flex items-center space-x-1 bg-cro-plat-100 rounded-lg p-1">
+                <button
+                  onClick={() => setSearchMode('hubspot')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors duration-200 ${
+                    searchMode === 'hubspot'
+                      ? 'bg-white text-cro-blue-700 shadow-sm'
+                      : 'text-cro-purple-600 hover:text-cro-purple-800'
+                  }`}
+                >
+                  HubSpot Only
+                </button>
+                <button
+                  onClick={() => setSearchMode('research')}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-colors duration-200 ${
+                    searchMode === 'research'
+                      ? 'bg-white text-cro-blue-700 shadow-sm'
+                      : 'text-cro-purple-600 hover:text-cro-purple-800'
+                  }`}
+                >
+                  Research + Add
+                </button>
+              </div>
+            </div>
+
+            {searchMode === 'hubspot' ? (
+              <CompanySearchForm
+                onCompanySelect={handleCompanySelect}
+                selectedCompany={selectedCompany}
+                isLoading={isGenerating}
+              />
+            ) : (
+              <CompanyResearchForm
+                onCompanySelect={handleCompanySelect}
+                isLoading={isGenerating}
+              />
+            )}
+
+            <div className="mt-4 text-xs text-cro-purple-600 bg-cro-blue-50 border border-cro-blue-200 rounded-lg p-3">
+              <strong>
+                {searchMode === 'hubspot' ? '📋 HubSpot Only:' : '🔍 Research + Add:'}
+              </strong>{' '}
+              {searchMode === 'hubspot'
+                ? 'Search existing companies in your HubSpot database.'
+                : 'Search HubSpot first, then People Data Labs if not found, with option to add to HubSpot.'
+              }
+            </div>
           </div>
 
           {/* Company Data Preview */}
@@ -248,8 +293,9 @@ export function CustomerResearch() {
           <div>
             <h4 className="font-semibold text-cro-soft-black-700 mb-2">Getting Started</h4>
             <ul className="space-y-1">
-              <li>• Start by searching for a company name or domain</li>
-              <li>• Select the correct company from the search results</li>
+              <li>• Choose between HubSpot-only or Research + Add mode</li>
+              <li>• Search by company name or domain</li>
+              <li>• For new prospects: add them to HubSpot from PDL data</li>
               <li>• Preview the HubSpot data that will be analyzed</li>
               <li>• Customize the research prompt for your specific needs</li>
             </ul>
@@ -258,8 +304,9 @@ export function CustomerResearch() {
           <div>
             <h4 className="font-semibold text-cro-soft-black-700 mb-2">Research Tips</h4>
             <ul className="space-y-1">
+              <li>• Research + Add mode searches PDL if not found in HubSpot</li>
               <li>• The AI analyzes HubSpot contacts, deals, and company data</li>
-              <li>• Customize prompts to focus on specific business areas</li>
+              <li>• View the full AI prompt used for better prompt tuning</li>
               <li>• Generated reports can be copied and shared</li>
               <li>• Research is tailored for CroMetrics' optimization expertise</li>
             </ul>

@@ -51,7 +51,7 @@ export const CONSTANTS = {
       'https://www.googleapis.com/auth/calendar.events.readonly'
     ],
     MAX_EVENTS: 50,
-    DEFAULT_LOOKBACK_DAYS: 7,
+    DEFAULT_LOOKBACK_DAYS: 0, // Only future events
     DEFAULT_LOOKAHEAD_DAYS: 30,
   },
 

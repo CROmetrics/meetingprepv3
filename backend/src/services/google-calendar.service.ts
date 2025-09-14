@@ -156,6 +156,10 @@ class GoogleCalendarService {
       
       const processedEvents: CalendarEvent[] = events
         .filter(event => event.attendees && event.attendees.length > 1) // Only meetings with attendees
+        .filter(event => {
+          const eventStart = new Date(event.start?.dateTime || event.start?.date || '');
+          return eventStart >= now; // Only future events
+        })
         .map(event => ({
           id: event.id!,
           summary: event.summary || 'No Title',
