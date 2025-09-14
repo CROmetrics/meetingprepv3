@@ -138,9 +138,18 @@ class OpenAIService {
 
       const report = response.choices[0]?.message?.content || 'Failed to generate report';
 
-      // Try to parse as JSON first
+      // Try to parse as JSON first (handle markdown code blocks)
       try {
-        const parsedReport = JSON.parse(report);
+        let jsonContent = report;
+
+        // Remove markdown code blocks if present
+        const jsonMatch = report.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          jsonContent = jsonMatch[1];
+          logger.info('Extracted JSON from markdown code blocks');
+        }
+
+        const parsedReport = JSON.parse(jsonContent);
         if (this.isValidIntelligenceReport(parsedReport)) {
           logger.info('Generated structured BD intelligence report');
           return parsedReport;
@@ -148,7 +157,7 @@ class OpenAIService {
           logger.warn('AI returned invalid JSON structure, falling back to string parsing');
         }
       } catch (parseError) {
-        logger.warn('AI response was not valid JSON, treating as string');
+        logger.warn('AI response was not valid JSON, treating as string', parseError instanceof Error ? parseError.message : 'Unknown error');
       }
 
       // Apply critique if enabled and fallback to string

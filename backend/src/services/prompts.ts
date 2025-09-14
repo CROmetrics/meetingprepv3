@@ -137,7 +137,7 @@ IMPORTANT: Return your response as a valid JSON object with the following struct
   "confidence": 0.85
 }
 
-Do NOT include any text before or after the JSON object. Return only valid JSON.`,
+CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code blocks, do NOT add any explanatory text, do NOT include any text before or after the JSON. Your entire response must be parseable as JSON.`,
   },
 
   CRITIQUE: {
