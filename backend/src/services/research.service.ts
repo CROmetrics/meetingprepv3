@@ -277,8 +277,11 @@ class ResearchService {
 
       const $ = cheerio.load(response.data);
 
-      // Remove script and style elements
+      // Remove script and style elements and LinkedIn UI junk
       $('script, style, noscript, nav, header, footer').remove();
+      // Remove LinkedIn auth/UI elements that contain junk content
+      $('.modal, .auth-modal, .login-form, .join-form, .cookie-banner, .gdpr-banner').remove();
+      $('[data-test-id*="auth"], [data-test-id*="login"], [data-test-id*="join"]').remove();
 
       // Try to extract profile content (LinkedIn's structure changes frequently)
       const profileSections = [
@@ -302,10 +305,32 @@ class ResearchService {
       // If specific selectors don't work, try a more general approach
       if (!profileContent) {
         const generalContent = $('main').text() || $('body').text() || '';
-        // Clean and truncate
+        // Clean and truncate - Enhanced filtering for LinkedIn junk content
         const lines = generalContent.split('\n')
           .map(line => line.trim())
-          .filter(line => line.length > 3 && !line.match(/^(Sign in|Join now|LinkedIn|Skip to main content)$/i))
+          .filter(line => {
+            // Skip empty or very short lines
+            if (line.length <= 3) return false;
+
+            // Skip common LinkedIn UI/auth junk
+            const junkPatterns = [
+              /^(Sign in|Join now|LinkedIn|Skip to main content|Welcome back|Email or phone|Password|Show|Forgot password\?|New to LinkedIn\?|Contact Info)$/i,
+              /^By clicking Continue to join or sign in, you agree to LinkedIn's/i,
+              /User Agreement|Privacy Policy|Cookie Policy/i,
+              /Continue to join or sign in/i,
+              /Sign in to view.*full profile/i,
+              /Welcome back/i,
+              /^(Show|Hide)$/i,
+              /^(Email|Phone|Password)$/i,
+              /^(Continue|Join|Sign)$/i,
+              /LinkedIn Corporation/i,
+              /^\d+$/, // Numbers only
+              /^(•|·|\|)$/, // Single punctuation
+              /^(The|A|An|And|Or|But|In|On|At|To|For|Of|With|By)$/i, // Single common words
+            ];
+
+            return !junkPatterns.some(pattern => pattern.test(line));
+          })
           .slice(0, 20); // Take first 20 meaningful lines
 
         profileContent = lines.join('\n');

@@ -293,10 +293,78 @@ export default function BDMeetingForm() {
     }
   };
 
-  // Function to populate form with calendar event data
-  const handleLoadMeetingDetails = (event: any) => {
+  // Function to research all attendees automatically
+  const researchAllAttendees = async (attendees: any[], company: string) => {
+    // Only research attendees with names and valid email domains (not personal email)
+    const attendeesToResearch = attendees.filter(attendee =>
+      attendee.name.trim() &&
+      attendee.email &&
+      !['gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com'].includes(attendee.email.split('@')[1]?.toLowerCase())
+    );
+
+    // Trigger research for each attendee sequentially to avoid overwhelming the API
+    for (const attendee of attendeesToResearch) {
+      try {
+        const attendeeToResearch = {
+          name: attendee.name,
+          email: attendee.email || undefined,
+          title: attendee.title || undefined,
+          company: attendee.company || undefined,
+          linkedinUrl: attendee.linkedinUrl || undefined,
+        };
+
+        // Set status to researching
+        setResearchStatus(prev => ({ ...prev, [attendee.id]: 'researching' }));
+
+        // Call the research API
+        const response = await api.researchSingleAttendee(company, attendeeToResearch);
+        const researchedAttendee = response.data?.attendee;
+
+        if (researchedAttendee) {
+          // Store research data
+          setResearchData(prev => ({ ...prev, [attendee.id]: researchedAttendee }));
+          setResearchStatus(prev => ({ ...prev, [attendee.id]: 'completed' }));
+
+          // Auto-populate form fields from research
+          setFormData(prev => ({
+            ...prev,
+            attendees: prev.attendees.map(formAttendee => {
+              if (formAttendee.id === attendee.id) {
+                const hubspotData = researchedAttendee.hubspotData;
+                return {
+                  ...formAttendee,
+                  email: formAttendee.email || hubspotData?.email || '',
+                  title: formAttendee.title || hubspotData?.jobtitle || '',
+                  company: formAttendee.company || hubspotData?.company || '',
+                  linkedinUrl: formAttendee.linkedinUrl || hubspotData?.linkedin_url || researchedAttendee.linkedinUrl || '',
+                };
+              }
+              return formAttendee;
+            })
+          }));
+        }
+      } catch (error) {
+        console.error(`Failed to research attendee ${attendee.name}:`, error);
+        setResearchStatus(prev => ({ ...prev, [attendee.id]: 'pending' }));
+      }
+
+      // Add a small delay between requests to be respectful to the API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  };
+
+  // Function to populate form with calendar event data and trigger automatic research
+  const handleLoadMeetingDetails = async (event: any) => {
     const meetingData = extractMeetingData(event);
     setFormData(meetingData);
+
+    // Automatically trigger research for all attendees
+    if (meetingData.company && meetingData.attendees.length > 0) {
+      // Wait a bit for the form data to be set
+      setTimeout(() => {
+        researchAllAttendees(meetingData.attendees, meetingData.company);
+      }, 100);
+    }
   };
 
   return (
