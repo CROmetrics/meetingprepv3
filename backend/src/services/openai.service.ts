@@ -138,17 +138,49 @@ class OpenAIService {
 
       const report = response.choices[0]?.message?.content || 'Failed to generate report';
 
-      // Apply critique if enabled
+      // Try to parse as JSON first
+      try {
+        const parsedReport = JSON.parse(report);
+        if (this.isValidIntelligenceReport(parsedReport)) {
+          logger.info('Generated structured BD intelligence report');
+          return parsedReport;
+        } else {
+          logger.warn('AI returned invalid JSON structure, falling back to string parsing');
+        }
+      } catch (parseError) {
+        logger.warn('AI response was not valid JSON, treating as string');
+      }
+
+      // Apply critique if enabled and fallback to string
       if (config.SELF_CRITIQUE) {
         return await this.applyCritique(report, 'bd');
       }
 
-      logger.info('Generated BD intelligence report');
+      logger.info('Generated BD intelligence report (string format)');
       return report;
     } catch (error) {
       logger.error('Error generating BD intelligence report:', error);
       throw new Error('Failed to generate intelligence report');
     }
+  }
+
+  private isValidIntelligenceReport(obj: any): boolean {
+    const requiredFields = [
+      'executiveSummary',
+      'targetCompanyIntelligence',
+      'meetingAttendeeAnalysis',
+      'strategicOpportunityAssessment',
+      'meetingDynamicsStrategy',
+      'keyQuestions',
+      'potentialObjectionsResponses'
+    ];
+
+    return requiredFields.every(field =>
+      obj.hasOwnProperty(field) &&
+      obj[field] !== null &&
+      obj[field] !== undefined &&
+      obj[field].toString().trim().length > 0
+    );
   }
 
   private async applyCritique(

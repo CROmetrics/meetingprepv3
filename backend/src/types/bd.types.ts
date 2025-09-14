@@ -21,6 +21,7 @@ export interface AttendeeResearch {
   email?: string;
   linkedinUrl?: string;
   linkedinSnippet?: string;
+  linkedinProfileContent?: string;
   hubspotData?: HubSpotContact;
   backgroundResearch?: string[];
   searchResults?: WebSearchResult[];

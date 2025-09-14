@@ -5,7 +5,9 @@ import hubspotService from '../services/hubspot.service';
 import openaiService from '../services/openai.service';
 import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { logUsage } from '../utils/logger';
+import logger from '../utils/logger';
 import { BDMeetingRequest, ResearchResult, AttendeeResearch } from '../types/bd.types';
+import { PROMPTS } from '../services/prompts';
 
 // Helper to convert empty strings to undefined
 const emptyToUndefined = z
@@ -33,6 +35,60 @@ const bdMeetingSchema = z.object({
   purpose: z.string().optional(),
   additionalContext: z.string().optional(),
 });
+
+// Helper function to validate and format AI reports
+function validateAndFormatReport(rawReport: any, fullPromptUsed: string) {
+  // Check if report is structured (object) vs legacy (string)
+  const isStructuredReport = typeof rawReport === 'object' && rawReport !== null;
+
+  if (isStructuredReport) {
+    // Validate required fields
+    const missingFields = [];
+    const requiredFields = [
+      'executiveSummary',
+      'targetCompanyIntelligence',
+      'meetingAttendeeAnalysis',
+      'strategicOpportunityAssessment',
+      'meetingDynamicsStrategy'
+    ];
+
+    for (const field of requiredFields) {
+      if (!rawReport[field] || rawReport[field].toString().trim().length === 0) {
+        missingFields.push(field);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      logger.warn(`AI report missing required fields: ${missingFields.join(', ')}`);
+    }
+
+    return {
+      executiveSummary: rawReport.executiveSummary || 'Executive summary not provided by AI',
+      targetCompanyIntelligence: rawReport.targetCompanyIntelligence || 'Target company analysis not provided by AI',
+      meetingAttendeeAnalysis: rawReport.meetingAttendeeAnalysis || 'Attendee analysis not provided by AI',
+      strategicOpportunityAssessment: rawReport.strategicOpportunityAssessment || 'Opportunity assessment not provided by AI',
+      meetingDynamicsStrategy: rawReport.meetingDynamicsStrategy || 'Meeting strategy not provided by AI',
+      keyQuestions: Array.isArray(rawReport.keyQuestions) ? rawReport.keyQuestions : ['Key questions not provided by AI'],
+      potentialObjectionsResponses: rawReport.potentialObjectionsResponses || 'Objection handling not provided by AI',
+      confidence: typeof rawReport.confidence === 'number' ? rawReport.confidence : 0.75,
+      promptUsed: fullPromptUsed,
+    };
+  } else {
+    // Legacy string format - put everything in executive summary
+    logger.warn('AI returned legacy string format instead of structured JSON');
+    return {
+      executiveSummary: rawReport || 'Report generation failed',
+      targetCompanyIntelligence: 'Report generated in legacy format. Please regenerate for detailed company analysis.',
+      meetingAttendeeAnalysis: 'Report generated in legacy format. Please regenerate for detailed attendee analysis.',
+      strategicOpportunityAssessment: 'Report generated in legacy format. Please regenerate for detailed opportunity assessment.',
+      meetingDynamicsStrategy: 'Report generated in legacy format. Please regenerate for detailed meeting strategy.',
+      keyQuestions: ['Report generated in legacy format. Please regenerate for specific questions.'],
+      potentialObjectionsResponses: 'Report generated in legacy format. Please regenerate for objection handling.',
+      confidence: 0.5,
+      promptUsed: fullPromptUsed,
+    };
+  }
+}
 
 export const researchSingleAttendee = asyncHandler(async (req: Request, res: Response) => {
   // Validate request for single attendee
@@ -246,11 +302,38 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
 
   researchContext += `**ATTENDEES:**\n`;
   for (const attendee of attendeeResearch) {
-    researchContext += `- ${attendee.name}`;
-    if (attendee.title) researchContext += ` (${attendee.title})`;
-    if (attendee.company) researchContext += ` at ${attendee.company}`;
-    if (attendee.linkedinUrl) researchContext += `\n  LinkedIn: ${attendee.linkedinUrl}`;
-    if (attendee.linkedinSnippet) researchContext += `\n  ${attendee.linkedinSnippet}`;
+    researchContext += `\n=== ${attendee.name} ===\n`;
+    if (attendee.title) researchContext += `Title: ${attendee.title}\n`;
+    if (attendee.company) researchContext += `Company: ${attendee.company}\n`;
+    if (attendee.email) researchContext += `Email: ${attendee.email}\n`;
+
+    // HubSpot data
+    if (attendee.hubspotData) {
+      researchContext += `HubSpot Status: Contact found in CRM\n`;
+      if (attendee.hubspotData.lifecyclestage) {
+        researchContext += `Lifecycle Stage: ${attendee.hubspotData.lifecyclestage}\n`;
+      }
+    }
+
+    // LinkedIn information
+    if (attendee.linkedinUrl) {
+      researchContext += `LinkedIn: ${attendee.linkedinUrl}\n`;
+      if (attendee.linkedinSnippet) {
+        researchContext += `LinkedIn Summary: ${attendee.linkedinSnippet}\n`;
+      }
+      if (attendee.linkedinProfileContent) {
+        researchContext += `LinkedIn Profile Content:\n${attendee.linkedinProfileContent}\n`;
+      }
+    }
+
+    // Background research
+    if (attendee.searchResults && attendee.searchResults.length > 0) {
+      researchContext += `Background Research:\n`;
+      attendee.searchResults.forEach((result, idx) => {
+        researchContext += `${idx + 1}. ${result.title}: ${result.snippet}\n`;
+      });
+    }
+
     researchContext += '\n';
   }
 
@@ -274,25 +357,22 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   }
 
   // Generate intelligence report
-  const rawReport = await openaiService.generateBDIntelligenceReport(researchContext, true);
+  let rawReport: any;
+  let reportGenerationError = null;
 
-  // Convert string report to structured format expected by frontend
-  const report = {
-    executiveSummary: typeof rawReport === 'string' ? rawReport : (rawReport.executiveSummary || ''),
-    targetCompanyIntelligence: typeof rawReport === 'string' ? '' : (rawReport.targetCompanyIntelligence || ''),
-    meetingAttendeeAnalysis: typeof rawReport === 'string' ? '' : (rawReport.meetingAttendeeAnalysis || ''),
-    strategicOpportunityAssessment: typeof rawReport === 'string' ? '' : (rawReport.strategicOpportunityAssessment || ''),
-    meetingDynamicsStrategy: typeof rawReport === 'string' ? '' : (rawReport.meetingDynamicsStrategy || ''),
-    keyQuestions: typeof rawReport === 'string' ? [] : (rawReport.keyQuestions || []),
-    potentialObjectionsResponses: typeof rawReport === 'string' ? '' : (rawReport.potentialObjectionsResponses || ''),
-    confidence: typeof rawReport === 'string' ? 85 : (rawReport.confidence || 85),
-    promptUsed: researchContext,
-  };
-
-  // If we got a string report, put the full content in executiveSummary for now
-  if (typeof rawReport === 'string') {
-    report.executiveSummary = rawReport;
+  try {
+    rawReport = await openaiService.generateBDIntelligenceReport(researchContext, true);
+  } catch (error) {
+    reportGenerationError = error instanceof Error ? error.message : 'Unknown error';
+    logger.error('Failed to generate BD intelligence report:', error);
+    throw new AppError(500, 'Failed to generate intelligence report', 'AI_GENERATION_ERROR');
   }
+
+  // Build the complete prompt for visibility
+  const fullPromptUsed = `SYSTEM PROMPT:\n${PROMPTS.BD_MEETING.SYSTEM}\n\nUSER PROMPT:\n${PROMPTS.BD_MEETING.USER}\n\nRESEARCH CONTEXT:\n${researchContext}`;
+
+  // Validate and convert report
+  const report = validateAndFormatReport(rawReport, fullPromptUsed);
 
   res.json({
     success: true,

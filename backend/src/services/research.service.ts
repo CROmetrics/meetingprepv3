@@ -119,7 +119,7 @@ class ResearchService {
     name: string,
     company: string,
     title?: string
-  ): Promise<{ url?: string; snippet?: string; title?: string }> {
+  ): Promise<{ url?: string; snippet?: string; title?: string; profileContent?: string }> {
     if (!name || !company) {
       return {};
     }
@@ -150,10 +150,14 @@ class ResearchService {
               (titleLower.includes(firstName) || snippetLower.includes(firstName)) &&
               (titleLower.includes(lastName) || snippetLower.includes(lastName))
             ) {
+              // Try to scrape LinkedIn profile content
+              const profileContent = await this.scrapeLinkedInProfile(result.link);
+
               return {
                 url: result.link,
                 snippet: result.snippet,
                 title: result.title,
+                profileContent,
               };
             }
           }
@@ -184,8 +188,16 @@ class ResearchService {
       const linkedinInfo = await this.researchAttendeeLinkedIn(name, company, title);
       research.linkedinUrl = linkedinInfo.url;
       research.linkedinSnippet = linkedinInfo.snippet;
+      if (linkedinInfo.profileContent) {
+        research.linkedinProfileContent = linkedinInfo.profileContent;
+      }
     } else {
       research.linkedinUrl = linkedinUrl;
+      // Try to scrape the provided LinkedIn URL
+      const profileContent = await this.scrapeLinkedInProfile(linkedinUrl);
+      if (profileContent) {
+        research.linkedinProfileContent = profileContent;
+      }
     }
 
     // Perform background search
@@ -244,6 +256,73 @@ class ResearchService {
       results,
       analysis: `Based on ${results.length} search results for competitive landscape`,
     };
+  }
+
+  private async scrapeLinkedInProfile(url: string): Promise<string | undefined> {
+    try {
+      // LinkedIn heavily protects against scraping, so we'll try a simple approach
+      // In production, you might want to use a proper LinkedIn API or specialized service
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+        },
+        timeout: 15000,
+        maxRedirects: 5,
+      });
+
+      const $ = cheerio.load(response.data);
+
+      // Remove script and style elements
+      $('script, style, noscript, nav, header, footer').remove();
+
+      // Try to extract profile content (LinkedIn's structure changes frequently)
+      const profileSections = [
+        '.pv-text-details__left-panel', // Name and title section
+        '.pv-top-card--list', // Contact info
+        '.pv-about__summary', // About section
+        '.pv-profile-section__card-item', // Experience items
+        '.pv-entity__summary', // Experience summaries
+        '.experience-section', // Experience section
+        '.education-section', // Education section
+      ];
+
+      let profileContent = '';
+      for (const selector of profileSections) {
+        const sectionContent = $(selector).text().trim();
+        if (sectionContent) {
+          profileContent += sectionContent + '\n';
+        }
+      }
+
+      // If specific selectors don't work, try a more general approach
+      if (!profileContent) {
+        const generalContent = $('main').text() || $('body').text() || '';
+        // Clean and truncate
+        const lines = generalContent.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 3 && !line.match(/^(Sign in|Join now|LinkedIn|Skip to main content)$/i))
+          .slice(0, 20); // Take first 20 meaningful lines
+
+        profileContent = lines.join('\n');
+      }
+
+      // Truncate if too long
+      if (profileContent.length > 2000) {
+        profileContent = profileContent.substring(0, 2000) + '... [truncated]';
+      }
+
+      logger.info(`LinkedIn profile scraped: ${url} (${profileContent.length} chars)`);
+      return profileContent.length > 50 ? profileContent : undefined;
+
+    } catch (error) {
+      logger.warn(`Failed to scrape LinkedIn profile ${url}:`, error instanceof Error ? error.message : 'Unknown error');
+      return undefined;
+    }
   }
 
   clearCache(): void {
