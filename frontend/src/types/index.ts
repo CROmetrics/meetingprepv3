@@ -61,6 +61,7 @@ export interface BDReportData {
     keyQuestions: string[];
     potentialObjectionsResponses: string;
     confidence: number;
+    promptUsed: string;
   };
   metadata: {
     company: string;
