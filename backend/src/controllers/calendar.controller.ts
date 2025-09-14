@@ -51,7 +51,7 @@ export const handleCalendarCallback = async (req: Request, res: Response) => {
     const tokens = await googleCalendarService.getAccessToken(code);
 
     // Redirect to frontend with success and tokens
-    const redirectUrl = new URL('https://meetingprepv3-production.up.railway.app/calendar');
+    const redirectUrl = new globalThis.URL('https://meetingprepv3-production.up.railway.app/calendar');
     redirectUrl.searchParams.set('status', 'success');
     redirectUrl.searchParams.set('access_token', tokens.access_token);
     if (tokens.refresh_token) {

@@ -358,12 +358,10 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
 
   // Generate intelligence report
   let rawReport: any;
-  let reportGenerationError = null;
 
   try {
     rawReport = await openaiService.generateBDIntelligenceReport(researchContext, true);
   } catch (error) {
-    reportGenerationError = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Failed to generate BD intelligence report:', error);
     throw new AppError(500, 'Failed to generate intelligence report', 'AI_GENERATION_ERROR');
   }

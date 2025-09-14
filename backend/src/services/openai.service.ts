@@ -203,7 +203,7 @@ class OpenAIService {
     ];
 
     return requiredFields.every(field =>
-      obj.hasOwnProperty(field) &&
+      Object.prototype.hasOwnProperty.call(obj, field) &&
       obj[field] !== null &&
       obj[field] !== undefined &&
       obj[field].toString().trim().length > 0
