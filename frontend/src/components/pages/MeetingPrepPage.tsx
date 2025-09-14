@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { CalendarIcon } from '@heroicons/react/24/outline';
-import { Sparkles, Briefcase } from 'lucide-react';
 import BDMeetingForm from '../forms/BDMeetingForm';
 import { MobileBriefView } from '../common/MobileBriefView';
 import { MeetingBriefResponse } from '../../services/calendar.api';
@@ -73,53 +71,7 @@ export function MeetingPrepPage() {
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid md:grid-cols-3 gap-6">
-          <FeatureCard
-            icon={<CalendarIcon className="h-6 w-6 text-cro-blue-700" />}
-            title="Calendar Integration"
-            description="Connect Google Calendar to automatically research meeting attendees and generate mobile-optimized briefs"
-            color="blue"
-          />
-          <FeatureCard
-            icon={<Sparkles className="h-6 w-6 text-cro-green-600" />}
-            title="AI-Powered Research"
-            description="LinkedIn profiles, company insights, and People Data Labs enrichment for comprehensive attendee intelligence"
-            color="green"
-          />
-          <FeatureCard
-            icon={<Briefcase className="h-6 w-6 text-cro-purple-700" />}
-            title="Mobile Executive Brief"
-            description="Executive briefings optimized for mobile viewing with collapsible sections and key insights"
-            color="purple"
-          />
-        </div>
-      </div>
     </div>
   );
 }
 
-// Feature Card Component
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  color: 'blue' | 'green' | 'purple';
-}
-
-function FeatureCard({ icon, title, description, color }: FeatureCardProps) {
-  const bgColors = {
-    blue: 'bg-cro-blue-100',
-    green: 'bg-cro-green-100',
-    purple: 'bg-cro-plat-100',
-  };
-
-  return (
-    <div className="bg-white rounded-2xl border border-cro-plat-300 p-6 hover:shadow-md transition-shadow">
-      <div className={`inline-flex p-3 ${bgColors[color]} rounded-xl mb-4`}>{icon}</div>
-      <h3 className="text-lg font-semibold text-cro-soft-black-700 mb-2">{title}</h3>
-      <p className="text-cro-purple-700">{description}</p>
-    </div>
-  );
-}

@@ -84,7 +84,8 @@ Guardrails
 - Always position Cro Metrics' capabilities in context of the target company's specific challenges and opportunities.
 - Map the target company's needs to specific Cro Metrics services from our current offerings above.
 
-Output (Markdown, use these headings exactly)
+Output (Markdown, use these headings exactly - do not add any additional words or modifications)
+DO NOT add any introductory text like "Executive Summary Improved Report" or similar phrases. Start directly with the section content.
 1) Executive Summary
    • 3-5 bullets capturing the key strategic opportunity, their current state, and our positioning advantage.
 2) Target Company Intelligence

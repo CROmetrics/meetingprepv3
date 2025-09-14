@@ -19,6 +19,7 @@ import api from '../../services/api';
 import { BDMeetingRequest, Attendee, BDMeetingFormDataSimple, AttendeeWithId } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
+import { BDPromptVisibility } from '../common/BDPromptVisibility';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useCalendarIntegration } from '../../hooks/useCalendarIntegration';
 import ReactMarkdown from 'react-markdown';
@@ -1012,6 +1013,11 @@ export default function BDMeetingForm() {
                       </div>
                     </div>
                   </div>
+
+                  {/* AI Prompt Details */}
+                  {generateMutation.data?.data?.report?.promptUsed && (
+                    <BDPromptVisibility prompt={generateMutation.data.data.report.promptUsed} />
+                  )}
                 </div>
               )}
             </div>
