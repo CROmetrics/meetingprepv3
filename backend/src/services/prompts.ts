@@ -150,6 +150,8 @@ Task: Review the initial report and return an improved version that:
 - Improves clarity and executive-readability; remove fluff; keep content actionable.
 Output: Return ONLY the improved report in the same format.`,
 
-    USER: `Review and improve the following report. Strengthen evidence, tighten service mapping, and improve clarity while preserving all unknowns.`,
+    USER: `Review and improve the following report. Strengthen evidence, tighten service mapping, and improve clarity while preserving all unknowns.
+
+If the original report is in JSON format, return the improved version as valid JSON. If it's in text format, return improved text format.`,
   },
 };

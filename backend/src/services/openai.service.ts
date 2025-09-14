@@ -151,7 +151,7 @@ class OpenAIService {
 
         const parsedReport = JSON.parse(jsonContent);
         if (this.isValidIntelligenceReport(parsedReport)) {
-          logger.info('Generated structured BD intelligence report');
+          logger.info('Generated structured BD intelligence report - skipping critique for structured response');
           return parsedReport;
         } else {
           logger.warn('AI returned invalid JSON structure, falling back to string parsing');
@@ -162,7 +162,25 @@ class OpenAIService {
 
       // Apply critique if enabled and fallback to string
       if (config.SELF_CRITIQUE) {
-        return await this.applyCritique(report, 'bd');
+        const critiqueResult = await this.applyCritique(report, 'bd');
+        // Try to parse critique result as JSON too
+        try {
+          let critiqueJsonContent = critiqueResult;
+          const critiqueJsonMatch = critiqueResult.match(/```json\s*([\s\S]*?)\s*```/);
+          if (critiqueJsonMatch) {
+            critiqueJsonContent = critiqueJsonMatch[1];
+            logger.info('Extracted JSON from critique markdown code blocks');
+          }
+
+          const parsedCritiqueReport = JSON.parse(critiqueJsonContent);
+          if (this.isValidIntelligenceReport(parsedCritiqueReport)) {
+            logger.info('Critique returned structured BD intelligence report');
+            return parsedCritiqueReport;
+          }
+        } catch {
+          logger.info('Critique result was not valid JSON, returning as string');
+        }
+        return critiqueResult;
       }
 
       logger.info('Generated BD intelligence report (string format)');
