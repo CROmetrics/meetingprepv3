@@ -45,6 +45,7 @@ export default function BDMeetingForm() {
     hasTokens,
     events,
     loadingEvents,
+    calendarError,
     expandedEvent,
     setExpandedEvent,
     fetchEvents,
@@ -233,7 +234,17 @@ export default function BDMeetingForm() {
     addToHubSpotMutation.mutate([attendeeToAdd]);
   };
 
-  const canGenerateReport = formData.attendees.every((a) => researchStatus[a.id] === 'completed');
+  // Helper function to determine if an attendee should be researched (exclude user themselves)
+  const shouldResearchAttendee = (attendee: AttendeeWithId) => {
+    // If attendee email contains 'crometrics' or common indicators of being the user, skip research requirement
+    const email = attendee.email?.toLowerCase() || '';
+    const isLikelyUser = email.includes('crometrics') || email.includes('cro-metrics');
+    return !isLikelyUser;
+  };
+
+  const canGenerateReport = formData.attendees.every((a) =>
+    !shouldResearchAttendee(a) || researchStatus[a.id] === 'completed'
+  );
   const hasResearchedAttendees = formData.attendees.some((a) => researchStatus[a.id] === 'completed');
 
   // Helper function to get attendee research status
@@ -327,6 +338,11 @@ export default function BDMeetingForm() {
                 <span className="text-sm text-cro-green-600">
                   ✓ Found {events.length} upcoming meetings
                 </span>
+              )}
+              {calendarError && (
+                <div className="text-sm text-cro-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  ⚠️ {calendarError}
+                </div>
               )}
             </div>
 
@@ -572,26 +588,32 @@ export default function BDMeetingForm() {
                   </div>
                   <div className="flex items-center space-x-2">
                     {/* Individual Research Button */}
-                    <button
-                      type="button"
-                      onClick={() => handleResearchSingleAttendee(attendee.id)}
-                      disabled={!canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'}
-                      className={clsx(
-                        'flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all',
-                        !canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : getAttendeeStatus(attendee.id) === 'completed'
-                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                      )}
-                      title={
-                        !canResearchAttendee(attendee)
-                          ? 'Enter company name and attendee name to research'
-                          : getAttendeeStatus(attendee.id) === 'completed'
-                            ? 'Re-research this attendee'
-                            : 'Research this attendee'
-                      }
-                    >
+                    {!shouldResearchAttendee(attendee) ? (
+                      <span className="flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-cro-green-100 text-cro-green-700">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        You (no research needed)
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleResearchSingleAttendee(attendee.id)}
+                        disabled={!canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'}
+                        className={clsx(
+                          'flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all',
+                          !canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : getAttendeeStatus(attendee.id) === 'completed'
+                              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                        )}
+                        title={
+                          !canResearchAttendee(attendee)
+                            ? 'Enter company name and attendee name to research'
+                            : getAttendeeStatus(attendee.id) === 'completed'
+                              ? 'Re-research this attendee'
+                              : 'Research this attendee'
+                        }
+                      >
                       {getAttendeeStatus(attendee.id) === 'researching' ? (
                         <>
                           <LoadingSpinner size="sm" />
@@ -609,6 +631,7 @@ export default function BDMeetingForm() {
                         </>
                       )}
                     </button>
+                    )}
                     {formData.attendees.length > 1 && (
                       <button
                         type="button"
@@ -766,8 +789,8 @@ export default function BDMeetingForm() {
               </h4>
               <p className="text-xs text-cro-soft-black-600">
                 {canGenerateReport
-                  ? 'All attendees researched! Click to generate your comprehensive BD intelligence report.'
-                  : 'Research all attendees individually using the buttons above, then generate your report.'}
+                  ? 'All required attendees researched! Click to generate your comprehensive BD intelligence report.'
+                  : 'Research the external attendees using the buttons above, then generate your report.'}
               </p>
             </div>
             <button
@@ -799,7 +822,7 @@ export default function BDMeetingForm() {
 
         {hasResearchedAttendees && !canGenerateReport && (
           <div className="text-center text-sm text-cro-soft-black-600">
-            Complete research for all attendees to generate the full intelligence report
+            Complete research for all external attendees to generate the full intelligence report
           </div>
         )}
       </div>

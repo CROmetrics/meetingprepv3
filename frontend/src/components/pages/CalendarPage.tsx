@@ -54,7 +54,7 @@ export function CalendarPage() {
 
       // Redirect to Google OAuth
       window.location.href = authUrl;
-    } catch (error) {
+    } catch {
       setError('Failed to initiate calendar connection');
       setAuthStatus('error');
     }

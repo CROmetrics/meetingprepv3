@@ -32,6 +32,7 @@ export function useCalendarIntegration() {
   const [tokens, setTokens] = useState<CalendarTokens | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
 
@@ -47,6 +48,7 @@ export function useCalendarIntegration() {
 
   const fetchEventsWithTokens = async (tokensToUse: CalendarTokens) => {
     setLoadingEvents(true);
+    setCalendarError(null);
     try {
       const data = await calendarApi.getCalendarEvents(tokensToUse, {
         lookback_days: 0, // Only show future events
@@ -55,10 +57,27 @@ export function useCalendarIntegration() {
 
       if (data.events) {
         setEvents(data.events);
+        // Clear any previous errors
+        setCalendarError(null);
+      } else {
+        setEvents([]);
+        setCalendarError('No upcoming meetings found in the next 14 days.');
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      alert('Failed to fetch calendar events');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+
+      if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('Invalid Credentials')) {
+        setCalendarError('Calendar access expired. Please reconnect your Google Calendar.');
+      } else if (errorMessage.includes('403') || errorMessage.includes('forbidden')) {
+        setCalendarError('Calendar access denied. Please check your Google Calendar permissions.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('timeout')) {
+        setCalendarError('Network error. Please check your connection and try again.');
+      } else {
+        setCalendarError(`Failed to load calendar events: ${errorMessage}`);
+      }
+
+      setEvents([]);
     } finally {
       setLoadingEvents(false);
     }
@@ -66,7 +85,7 @@ export function useCalendarIntegration() {
 
   const fetchEvents = async () => {
     if (!tokens) {
-      alert('Please connect your calendar first');
+      setCalendarError('Please connect your Google Calendar first');
       return;
     }
 
@@ -144,6 +163,7 @@ export function useCalendarIntegration() {
     tokens,
     events,
     loadingEvents,
+    calendarError,
     selectedEvent,
     expandedEvent,
 

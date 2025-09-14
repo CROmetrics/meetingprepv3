@@ -9,35 +9,53 @@
     /* Blues */
     --cro-blue-800: #0F8AFF;
     --cro-blue-700: #2996FF;
+    --cro-blue-600: #2E8FDD;
     --cro-blue-500: #399EFF;
     --cro-blue-400: #61B1FF;
+    --cro-blue-300: #7FC5FF;
     --cro-blue-200: #9CCEFF;
     --cro-blue-100: #E0F0FF;
+    --cro-blue-50: #F0F9FF;
 
     /* Greens */
+    --cro-green-800: #459659;
     --cro-green-700: #509A6A;
     --cro-green-600: #56A471;
     --cro-green-500: #57A773;
     --cro-green-400: #79B98F;
+    --cro-green-300: #95C6A6;
     --cro-green-200: #ABD3B9;
     --cro-green-100: #DEEDE3;
+    --cro-green-50: #F0F7F2;
 
     /* Purple */
     --cro-purple-800: #484D6D;
     --cro-purple-700: #6D718A;
+    --cro-purple-600: #838599;
+    --cro-purple-500: #9499A7;
     --cro-purple-400: #A3A6B6;
+    --cro-purple-300: #B8BBC7;
+    --cro-purple-200: #CDCFD8;
+    --cro-purple-100: #E6E7EC;
+    --cro-purple-50: #F3F3F5;
 
     /* Platinum (neutrals) */
     --cro-plat-400: #D5DDD9;
     --cro-plat-300: #E3E8E6;
+    --cro-plat-200: #EAEEED;
     --cro-plat-100: #F4F6F5;
+    --cro-plat-50: #FAFBFA;
 
     /* Yellow */
+    --cro-yellow-800: #B57C09;
     --cro-yellow-700: #C7870A;
     --cro-yellow-600: #F5B841;
     --cro-yellow-500: #F7C667;
     --cro-yellow-400: #FADCA0;
+    --cro-yellow-300: #FBE3B8;
+    --cro-yellow-200: #FCE8C3;
     --cro-yellow-100: #FCEDCF;
+    --cro-yellow-50: #FEF8EB;
 
     /* Red (errors/destructive only) */
     --cro-red-600: #EB0000;
@@ -45,7 +63,10 @@
     --cro-red-300: #FFD6D6;
 
     /* Core */
+    --cro-soft-black-900: #1B1A1B;
     --cro-soft-black-700: #2F2B2F;
+    --cro-soft-black-600: #3E393E;
+    --cro-soft-black-500: #5A535A;
     --cro-white: #FFFFFF;
 
     /* Rounding */
