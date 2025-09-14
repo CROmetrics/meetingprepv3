@@ -209,14 +209,24 @@ export default function BDMeetingForm() {
 
 
   const handleGenerateReport = () => {
+    // Clean data to match backend validation expectations
+    const cleanAttendees = formData.attendees
+      .filter(attendee => attendee.name.trim()) // Only include attendees with names
+      .map(({ id: _, ...attendee }) => ({
+        name: attendee.name.trim(),
+        email: attendee.email?.trim() || undefined,
+        title: attendee.title?.trim() || undefined,
+        company: attendee.company?.trim() || undefined,
+        linkedinUrl: attendee.linkedinUrl?.trim() || undefined,
+      }));
+
     const request: BDMeetingRequest = {
-      company: formData.company,
-      attendees: formData.attendees.map(
-        ({ id: _, ...attendee }) => attendee
-      ),
-      purpose: formData.purpose,
-      additionalContext: formData.additionalContext,
+      company: formData.company.trim(),
+      attendees: cleanAttendees,
+      purpose: formData.purpose?.trim() || undefined,
+      additionalContext: formData.additionalContext?.trim() || undefined,
     };
+
     generateMutation.mutate(request);
   };
 

@@ -117,7 +117,7 @@ class CalendarApiService {
       body: JSON.stringify({
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
-        lookback_days: options.lookback_days || 7,
+        lookback_days: options.lookback_days || 0,
         lookahead_days: options.lookahead_days || 30,
       }),
     });

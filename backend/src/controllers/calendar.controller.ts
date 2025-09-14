@@ -84,7 +84,7 @@ export const getCalendarEvents = async (req: Request, res: Response) => {
     googleCalendarService.setAccessToken(access_token, refresh_token);
 
     // Fetch events with proper defaults
-    const lookbackDays = lookback_days !== undefined ? parseInt(lookback_days as string, 10) : 7;
+    const lookbackDays = lookback_days !== undefined ? parseInt(lookback_days as string, 10) : 0;
     const lookaheadDays = lookahead_days !== undefined ? parseInt(lookahead_days as string, 10) : 30;
 
     const events = await googleCalendarService.getUpcomingEvents(
