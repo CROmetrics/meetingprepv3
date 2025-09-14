@@ -1,15 +1,21 @@
 import { useState } from 'react';
 import BDMeetingForm from '../forms/BDMeetingForm';
 import { MobileBriefView } from '../common/MobileBriefView';
+import { ReportsHistory } from '../common/ReportsHistory';
 import { MeetingBriefResponse } from '../../services/calendar.api';
+import { SavedReport } from '../../types';
 
 export function MeetingPrepPage() {
   const [briefData, setBriefData] = useState<MeetingBriefResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const handleCloseBrief = () => {
     setBriefData(null);
     setError(null);
+  };
+
+  const handleReportSelect = (report: SavedReport) => {
+    // For now, just log the selected report - could be expanded to show in modal
+    console.log('Selected report:', report);
   };
 
   // If showing brief, render the mobile view
@@ -61,6 +67,11 @@ export function MeetingPrepPage() {
               </div>
             </div>
           )}
+
+          {/* Reports History */}
+          <div className="mb-6">
+            <ReportsHistory onReportSelect={handleReportSelect} />
+          </div>
 
           {/* Unified Research Interface */}
           <div className="bg-white rounded-lg shadow-sm border">

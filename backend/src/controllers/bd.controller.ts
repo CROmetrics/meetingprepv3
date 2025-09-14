@@ -3,6 +3,7 @@ import { z } from 'zod';
 import researchService from '../services/research.service';
 import hubspotService from '../services/hubspot.service';
 import openaiService from '../services/openai.service';
+import reportsService from '../services/reports.service';
 import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { logUsage } from '../utils/logger';
 import logger from '../utils/logger';
@@ -372,9 +373,25 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   // Validate and convert report
   const report = validateAndFormatReport(rawReport, fullPromptUsed);
 
+  // Save report to file system for future reference
+  const reportId = await reportsService.saveReport({
+    company: data.company,
+    purpose: data.purpose,
+    report,
+    research: researchResult,
+    metadata: {
+      company: data.company,
+      attendeesCount: data.attendees.length,
+      sourcesCount: researchResult.sources.length,
+      generatedAt: new Date().toISOString(),
+    },
+    promptUsed: fullPromptUsed,
+  });
+
   res.json({
     success: true,
     data: {
+      reportId,
       report,
       research: researchResult,
       metadata: {
@@ -454,5 +471,60 @@ export const addToHubSpot = asyncHandler(async (req: Request, res: Response) => 
       totalProcessed: attendees.length,
       successCount: results.filter((r) => r.success).length,
     },
+  });
+});
+
+// Report management endpoints
+export const listReports = asyncHandler(async (req: Request, res: Response) => {
+  const { company } = req.query;
+  
+  let reports;
+  if (company && typeof company === 'string') {
+    reports = await reportsService.searchReports(company);
+  } else {
+    reports = await reportsService.listReports();
+  }
+
+  res.json({
+    success: true,
+    data: reports,
+  });
+});
+
+export const getReport = asyncHandler(async (req: Request, res: Response) => {
+  const { reportId } = req.params;
+
+  if (!reportId) {
+    throw new AppError(400, 'Report ID is required', 'VALIDATION_ERROR');
+  }
+
+  const report = await reportsService.getReport(reportId);
+
+  if (!report) {
+    throw new AppError(404, 'Report not found', 'NOT_FOUND');
+  }
+
+  res.json({
+    success: true,
+    data: report,
+  });
+});
+
+export const deleteReport = asyncHandler(async (req: Request, res: Response) => {
+  const { reportId } = req.params;
+
+  if (!reportId) {
+    throw new AppError(400, 'Report ID is required', 'VALIDATION_ERROR');
+  }
+
+  const deleted = await reportsService.deleteReport(reportId);
+
+  if (!deleted) {
+    throw new AppError(404, 'Report not found', 'NOT_FOUND');
+  }
+
+  res.json({
+    success: true,
+    message: 'Report deleted successfully',
   });
 });

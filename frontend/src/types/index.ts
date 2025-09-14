@@ -132,3 +132,29 @@ export interface ResearchReport {
   generatedAt: string;
   promptUsed: string;
 }
+
+export interface SavedReport {
+  id: string;
+  company: string;
+  purpose?: string;
+  report: any;
+  research: any;
+  metadata: {
+    company: string;
+    attendeesCount: number;
+    sourcesCount: number;
+    generatedAt: string;
+  };
+  promptUsed: string;
+  savedAt: string;
+}
+
+export interface ReportSummary {
+  id: string;
+  company: string;
+  purpose?: string;
+  generatedAt: string;
+  savedAt: string;
+  attendeesCount: number;
+  sourcesCount: number;
+}

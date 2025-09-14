@@ -36,6 +36,11 @@ router.post('/bd/generate', bdController.generateBDReport);
 router.post('/bd/add-to-hubspot', bdController.addToHubSpot);
 router.get('/bd/search-deals', bdController.searchDeals);
 
+// Report management routes
+router.get('/reports', bdController.listReports);
+router.get('/reports/:reportId', bdController.getReport);
+router.delete('/reports/:reportId', bdController.deleteReport);
+
 // Debug routes
 router.get('/usage-logs', debugController.getUsageLogs);
 router.get('/debug/hubspot/:contactId', debugController.getHubSpotContact);

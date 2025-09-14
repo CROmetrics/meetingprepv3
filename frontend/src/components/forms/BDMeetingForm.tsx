@@ -333,7 +333,7 @@ export default function BDMeetingForm() {
           setResearchData(prev => ({ ...prev, [attendee.id]: researchedAttendee }));
           setResearchStatus(prev => ({ ...prev, [attendee.id]: 'completed' }));
 
-          // Auto-populate form fields from research
+          // Auto-populate form fields from research (only update empty fields to preserve loaded data)
           setFormData(prev => ({
             ...prev,
             attendees: prev.attendees.map(formAttendee => {
@@ -341,6 +341,7 @@ export default function BDMeetingForm() {
                 const hubspotData = researchedAttendee.hubspotData;
                 return {
                   ...formAttendee,
+                  // Only update fields that are currently empty to preserve loaded meeting data
                   email: formAttendee.email || hubspotData?.email || '',
                   title: formAttendee.title || hubspotData?.jobtitle || '',
                   company: formAttendee.company || hubspotData?.company || '',
@@ -364,14 +365,22 @@ export default function BDMeetingForm() {
   // Function to populate form with calendar event data and trigger automatic research
   const handleLoadMeetingDetails = async (event: any) => {
     const meetingData = extractMeetingData(event);
+    
+    // Clear any existing research data to prevent conflicts
+    setResearchData({});
+    setResearchStatus({});
+    setCompanyResearchData(null);
+    setCompanyResearchStatus('idle');
+    
+    // Set the form data
     setFormData(meetingData);
 
     // Automatically trigger research for all attendees
     if (meetingData.company && meetingData.attendees.length > 0) {
-      // Wait a bit for the form data to be set
+      // Wait a bit for the form data to be set and localStorage to update
       setTimeout(() => {
         researchAllAttendees(meetingData.attendees, meetingData.company);
-      }, 100);
+      }, 200);
     }
   };
 

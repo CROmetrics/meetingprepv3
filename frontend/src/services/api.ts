@@ -10,6 +10,8 @@ import {
   HubSpotCompany,
   CompanyInsight,
   ResearchReport,
+  SavedReport,
+  ReportSummary,
 } from '../types';
 
 class ApiService {
@@ -185,6 +187,20 @@ class ApiService {
     founded_year?: string;
   }): Promise<ApiResponse<HubSpotCompany>> {
     return this.client.post('/research/companies/add-to-hubspot', companyData);
+  }
+
+  // Report management
+  async listReports(company?: string): Promise<ApiResponse<ReportSummary[]>> {
+    const params = company ? { company } : {};
+    return this.client.get('/reports', { params });
+  }
+
+  async getReport(reportId: string): Promise<ApiResponse<SavedReport>> {
+    return this.client.get(`/reports/${reportId}`);
+  }
+
+  async deleteReport(reportId: string): Promise<ApiResponse<{ message: string }>> {
+    return this.client.delete(`/reports/${reportId}`);
   }
 }
 
