@@ -245,17 +245,10 @@ export default function BDMeetingForm() {
     addToHubSpotMutation.mutate([attendeeToAdd]);
   };
 
-  // Helper function to determine if an attendee should be researched (exclude user themselves)
-  const shouldResearchAttendee = (attendee: AttendeeWithId) => {
-    // If attendee email contains 'crometrics' or common indicators of being the user, skip research requirement
-    const email = attendee.email?.toLowerCase() || '';
-    const isLikelyUser = email.includes('crometrics') || email.includes('cro-metrics');
-    return !isLikelyUser;
-  };
-
+  // Allow report generation as long as basic info is provided - research is optional but recommended
   const canGenerateReport = formData.attendees.every((a) =>
-    !shouldResearchAttendee(a) || researchStatus[a.id] === 'completed'
-  );
+    a.name.trim().length > 0
+  ) && formData.company.trim().length > 0;
   const hasResearchedAttendees = formData.attendees.some((a) => researchStatus[a.id] === 'completed');
 
   // Helper function to get attendee research status
@@ -598,51 +591,44 @@ export default function BDMeetingForm() {
                     {getAttendeeStatus(attendee.id) === 'researching' && <LoadingSpinner size="sm" />}
                   </div>
                   <div className="flex items-center space-x-2">
-                    {/* Individual Research Button */}
-                    {!shouldResearchAttendee(attendee) ? (
-                      <span className="flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-cro-green-100 text-cro-green-700">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        You (no research needed)
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleResearchSingleAttendee(attendee.id)}
-                        disabled={!canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'}
-                        className={clsx(
-                          'flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all',
-                          !canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : getAttendeeStatus(attendee.id) === 'completed'
-                              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                        )}
-                        title={
-                          !canResearchAttendee(attendee)
-                            ? 'Enter company name and attendee name to research'
-                            : getAttendeeStatus(attendee.id) === 'completed'
-                              ? 'Re-research this attendee'
-                              : 'Research this attendee'
-                        }
-                      >
-                      {getAttendeeStatus(attendee.id) === 'researching' ? (
-                        <>
-                          <LoadingSpinner size="sm" />
-                          <span className="ml-1">Researching</span>
-                        </>
-                      ) : getAttendeeStatus(attendee.id) === 'completed' ? (
-                        <>
-                          <RefreshCw className="w-3 h-3 mr-1" />
-                          Re-research
-                        </>
-                      ) : (
-                        <>
-                          <Search className="w-3 h-3 mr-1" />
-                          Research
-                        </>
+                    {/* Individual Research Button - Available for all attendees */}
+                    <button
+                      type="button"
+                      onClick={() => handleResearchSingleAttendee(attendee.id)}
+                      disabled={!canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'}
+                      className={clsx(
+                        'flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all',
+                        !canResearchAttendee(attendee) || getAttendeeStatus(attendee.id) === 'researching'
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : getAttendeeStatus(attendee.id) === 'completed'
+                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                       )}
-                    </button>
+                      title={
+                        !canResearchAttendee(attendee)
+                          ? 'Enter company name and attendee name to research'
+                          : getAttendeeStatus(attendee.id) === 'completed'
+                            ? 'Re-research this attendee'
+                            : 'Research this attendee'
+                      }
+                    >
+                    {getAttendeeStatus(attendee.id) === 'researching' ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-1">Researching</span>
+                      </>
+                    ) : getAttendeeStatus(attendee.id) === 'completed' ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Re-research
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-3 h-3 mr-1" />
+                        Research
+                      </>
                     )}
+                  </button>
                     {formData.attendees.length > 1 && (
                       <button
                         type="button"
