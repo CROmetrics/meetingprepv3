@@ -263,10 +263,8 @@ export default function BDMeetingForm() {
     addToHubSpotMutation.mutate([attendeeToAdd]);
   };
 
-  // Allow report generation as long as basic info is provided - research is optional but recommended
-  const canGenerateReport = formData.attendees.every((a) =>
-    a.name.trim().length > 0
-  ) && formData.company.trim().length > 0;
+  // Allow report generation as long as company is provided - everything else is optional
+  const canGenerateReport = formData.company.trim().length > 0;
   const hasResearchedAttendees = formData.attendees.some((a) => researchStatus[a.id] === 'completed');
 
   // Helper function to get attendee research status
@@ -887,7 +885,7 @@ export default function BDMeetingForm() {
               <p className="text-xs text-cro-soft-black-600">
                 {canGenerateReport
                   ? 'Ready to generate! Click to create your comprehensive BD intelligence report.'
-                  : 'Please ensure all attendees have names and company information is provided.'}
+                  : 'Please provide a company name to generate your report.'}
               </p>
             </div>
             <button
@@ -917,11 +915,6 @@ export default function BDMeetingForm() {
           </div>
         </div>
 
-        {hasResearchedAttendees && !canGenerateReport && (
-          <div className="text-center text-sm text-cro-soft-black-600">
-            Complete research for all external attendees to generate the full intelligence report
-          </div>
-        )}
       </div>
 
       {/* Error Display */}
