@@ -53,14 +53,7 @@ export interface UsageLog {
 
 export interface BDReportData {
   report: {
-    executiveSummary: string;
-    targetCompanyIntelligence: string;
-    meetingAttendeeAnalysis: string;
-    strategicOpportunityAssessment: string;
-    meetingDynamicsStrategy: string;
-    keyQuestions: string[];
-    potentialObjectionsResponses: string;
-    confidence: number;
+    content: string;
     promptUsed: string;
   };
   metadata: {

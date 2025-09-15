@@ -125,22 +125,7 @@ Position Cro Metrics with our comprehensive service portfolio and scientific app
 
 Base all analysis on the research context provided. Mark gaps as **Unknown** and prioritize additional research needs.
 
-IMPORTANT: Return your response as a valid JSON object with the following structure:
-{
-  "executiveSummary": "3-5 bullet points capturing key strategic opportunity, current state, and positioning advantage",
-  "targetCompanyIntelligence": "Business model, recent performance, strategic priorities, digital transformation initiatives",
-  "meetingAttendeeAnalysis": "Analysis for each attendee including background, priorities, decision-making style, engagement approach",
-  "competitiveLandscapeAnalysis": "How they compare to industry leaders, gaps identified, transformation maturity",
-  "strategicOpportunityAssessment": "Specific areas where Cro Metrics can add value with evidence and service mapping",
-  "meetingDynamicsStrategy": "How to navigate group dynamics, meeting flow, addressing strategies",
-  "keyQuestions": ["array", "of", "strategic", "questions"],
-  "potentialObjectionsResponses": "Likely pushback and responses for each attendee type",
-  "followUpActionPlan": "Specific next steps, timeline, deliverables to propose",
-  "researchValidationNeeded": ["facts", "to", "confirm"],
-  "confidence": 0.85
-}
-
-CRITICAL: Return ONLY the raw JSON object. Do NOT wrap it in markdown code blocks, do NOT add any explanatory text, do NOT include any text before or after the JSON. Your entire response must be parseable as JSON.`,
+Return your response in clean, well-formatted markdown using the exact section headings below. Write in a professional, strategic tone suitable for executives preparing for high-stakes meetings.`,
   },
 
   CRITIQUE: {

@@ -972,15 +972,7 @@ export default function BDMeetingForm() {
                   const report = generateMutation.data?.data?.report;
                   if (!report) return;
 
-                  const content =
-                    `# BD Intelligence Report - ${formData.company}\n\n` +
-                    `## Executive Summary\n${report.executiveSummary}\n\n` +
-                    `## Target Company Intelligence\n${report.targetCompanyIntelligence}\n\n` +
-                    `## Meeting Attendee Analysis\n${report.meetingAttendeeAnalysis}\n\n` +
-                    `## Strategic Opportunity Assessment\n${report.strategicOpportunityAssessment}\n\n` +
-                    `## Meeting Dynamics Strategy\n${report.meetingDynamicsStrategy}\n\n` +
-                    `## Key Questions\n${report.keyQuestions?.map((q: string) => `- ${q}`).join('\n') || ''}\n\n` +
-                    `## Potential Objections & Responses\n${report.potentialObjectionsResponses}`;
+                  const content = `# BD Intelligence Report - ${formData.company}\n\n${report.content}`;
                   navigator.clipboard.writeText(content);
                   alert('Intelligence report copied to clipboard!');
                 }}
@@ -991,115 +983,12 @@ export default function BDMeetingForm() {
 
               {generateMutation.data?.data?.report && (
                 <div className="space-y-6">
-                  {/* Executive Summary */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">
-                      Executive Summary
-                    </h4>
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-cro-purple-700 leading-relaxed">
-                        <ReactMarkdown>
-                          {generateMutation.data?.data?.report?.executiveSummary || ''}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Target Company Intelligence */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3 flex items-center">
-                      <Building2 className="w-5 h-5 mr-2 text-cro-green-600" />
-                      Target Company Intelligence
-                    </h4>
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-cro-purple-700 leading-relaxed">
-                        <ReactMarkdown>
-                          {generateMutation.data?.data?.report?.targetCompanyIntelligence}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Meeting Attendee Analysis */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3 flex items-center">
-                      <Users className="w-5 h-5 mr-2 text-cro-blue-700" />
-                      Meeting Attendee Analysis
-                    </h4>
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-cro-purple-700 leading-relaxed">
-                        <ReactMarkdown>
-                          {generateMutation.data?.data?.report?.meetingAttendeeAnalysis}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Strategic Opportunity Assessment */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">
-                      Strategic Opportunity Assessment
-                    </h4>
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-cro-purple-700 leading-relaxed">
-                        <ReactMarkdown>
-                          {generateMutation.data?.data?.report?.strategicOpportunityAssessment}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Key Questions */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">
-                      Key Questions to Ask
-                    </h4>
-                    <ul className="space-y-2">
-                      {generateMutation.data?.data?.report?.keyQuestions?.map(
-                        (question: string, index: number) => (
-                          <li key={index} className="flex items-start">
-                            <span className="text-cro-blue-600 mr-2">•</span>
-                            <span className="text-cro-purple-700">{question}</span>
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-
-                  {/* Meeting Dynamics Strategy */}
-                  <div>
-                    <h4 className="text-lg font-bold text-cro-soft-black-700 mb-3">
-                      Meeting Dynamics Strategy
-                    </h4>
-                    <div className="prose prose-sm max-w-none">
-                      <div className="text-cro-purple-700 leading-relaxed">
-                        <ReactMarkdown>
-                          {generateMutation.data?.data?.report?.meetingDynamicsStrategy}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Confidence Score */}
-                  <div className="bg-white rounded-xl p-4 border border-cro-plat-200">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-cro-soft-black-700">
-                        Research Confidence
-                      </span>
-                      <div className="flex items-center">
-                        <div className="w-24 h-2 bg-cro-plat-200 rounded-full mr-2">
-                          <div
-                            className="h-full bg-cro-green-500 rounded-full"
-                            style={{
-                              width: `${(generateMutation.data?.data?.report?.confidence || 0) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        <span className="text-sm font-bold text-cro-soft-black-700">
-                          {Math.round((generateMutation.data?.data?.report?.confidence || 0) * 100)}
-                          %
-                        </span>
-                      </div>
+                  {/* Full Report Content */}
+                  <div className="prose prose-sm max-w-none">
+                    <div className="text-cro-purple-700 leading-relaxed">
+                      <ReactMarkdown>
+                        {generateMutation.data?.data?.report?.content || 'No report content available.'}
+                      </ReactMarkdown>
                     </div>
                   </div>
 

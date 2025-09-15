@@ -64,10 +64,6 @@ class OpenAIService {
 
       const brief = response.choices[0]?.message?.content || 'Failed to generate brief';
 
-      // Apply critique if enabled
-      if (config.SELF_CRITIQUE) {
-        return await this.applyCritique(brief, 'internal');
-      }
 
       logger.info('Generated internal meeting brief');
       return brief;
@@ -128,62 +124,13 @@ class OpenAIService {
 
         const report = finalResponse.choices[0]?.message?.content || 'Failed to generate report';
 
-        // Apply critique if enabled
-        if (config.SELF_CRITIQUE) {
-          return await this.applyCritique(report, 'bd');
-        }
 
         return report;
       }
 
       const report = response.choices[0]?.message?.content || 'Failed to generate report';
 
-      // Try to parse as JSON first (handle markdown code blocks)
-      try {
-        let jsonContent = report;
-
-        // Remove markdown code blocks if present
-        const jsonMatch = report.match(/```json\s*([\s\S]*?)\s*```/);
-        if (jsonMatch) {
-          jsonContent = jsonMatch[1];
-          logger.info('Extracted JSON from markdown code blocks');
-        }
-
-        const parsedReport = JSON.parse(jsonContent);
-        if (this.isValidIntelligenceReport(parsedReport)) {
-          logger.info('Generated structured BD intelligence report - skipping critique for structured response');
-          return parsedReport;
-        } else {
-          logger.warn('AI returned invalid JSON structure, falling back to string parsing');
-        }
-      } catch (parseError) {
-        logger.warn('AI response was not valid JSON, treating as string', parseError instanceof Error ? parseError.message : 'Unknown error');
-      }
-
-      // Apply critique if enabled and fallback to string
-      if (config.SELF_CRITIQUE) {
-        const critiqueResult = await this.applyCritique(report, 'bd');
-        // Try to parse critique result as JSON too
-        try {
-          let critiqueJsonContent = critiqueResult;
-          const critiqueJsonMatch = critiqueResult.match(/```json\s*([\s\S]*?)\s*```/);
-          if (critiqueJsonMatch) {
-            critiqueJsonContent = critiqueJsonMatch[1];
-            logger.info('Extracted JSON from critique markdown code blocks');
-          }
-
-          const parsedCritiqueReport = JSON.parse(critiqueJsonContent);
-          if (this.isValidIntelligenceReport(parsedCritiqueReport)) {
-            logger.info('Critique returned structured BD intelligence report');
-            return parsedCritiqueReport;
-          }
-        } catch {
-          logger.info('Critique result was not valid JSON, returning as string');
-        }
-        return critiqueResult;
-      }
-
-      logger.info('Generated BD intelligence report (string format)');
+      logger.info('Generated BD intelligence report');
       return report;
     } catch (error) {
       logger.error('Error generating BD intelligence report:', error);
@@ -191,52 +138,7 @@ class OpenAIService {
     }
   }
 
-  private isValidIntelligenceReport(obj: any): boolean {
-    const requiredFields = [
-      'executiveSummary',
-      'targetCompanyIntelligence',
-      'meetingAttendeeAnalysis',
-      'strategicOpportunityAssessment',
-      'meetingDynamicsStrategy',
-      'keyQuestions',
-      'potentialObjectionsResponses'
-    ];
 
-    return requiredFields.every(field =>
-      Object.prototype.hasOwnProperty.call(obj, field) &&
-      obj[field] !== null &&
-      obj[field] !== undefined &&
-      obj[field].toString().trim().length > 0
-    );
-  }
-
-  private async applyCritique(
-    originalReport: string,
-    type: 'internal' | 'bd'
-  ): Promise<string> {
-    const client = this.ensureClient();
-
-    try {
-      const critiquePrompt = `${PROMPTS.CRITIQUE.USER}\n\n**ORIGINAL REPORT:**\n${originalReport}`;
-
-      const response = await client.chat.completions.create({
-        model: config.OPENAI_MODEL,
-        messages: [
-          { role: 'system', content: PROMPTS.CRITIQUE.SYSTEM },
-          { role: 'user', content: critiquePrompt },
-        ],
-        temperature: 0.5,
-        max_tokens: 3000,
-      });
-
-      const improvedReport = response.choices[0]?.message?.content || originalReport;
-      logger.info(`Applied critique to ${type} report`);
-      return improvedReport;
-    } catch (error) {
-      logger.error('Error applying critique:', error);
-      return originalReport; // Return original if critique fails
-    }
-  }
 
   private getBDToolDefinitions(): OpenAI.Chat.ChatCompletionTool[] {
     return [

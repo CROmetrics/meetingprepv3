@@ -37,59 +37,6 @@ const bdMeetingSchema = z.object({
   additionalContext: z.string().optional(),
 });
 
-// Helper function to validate and format AI reports
-function validateAndFormatReport(rawReport: any, fullPromptUsed: string) {
-  // Check if report is structured (object) vs legacy (string)
-  const isStructuredReport = typeof rawReport === 'object' && rawReport !== null;
-
-  if (isStructuredReport) {
-    // Validate required fields
-    const missingFields = [];
-    const requiredFields = [
-      'executiveSummary',
-      'targetCompanyIntelligence',
-      'meetingAttendeeAnalysis',
-      'strategicOpportunityAssessment',
-      'meetingDynamicsStrategy'
-    ];
-
-    for (const field of requiredFields) {
-      if (!rawReport[field] || rawReport[field].toString().trim().length === 0) {
-        missingFields.push(field);
-      }
-    }
-
-    if (missingFields.length > 0) {
-      logger.warn(`AI report missing required fields: ${missingFields.join(', ')}`);
-    }
-
-    return {
-      executiveSummary: rawReport.executiveSummary || 'Executive summary not provided by AI',
-      targetCompanyIntelligence: rawReport.targetCompanyIntelligence || 'Target company analysis not provided by AI',
-      meetingAttendeeAnalysis: rawReport.meetingAttendeeAnalysis || 'Attendee analysis not provided by AI',
-      strategicOpportunityAssessment: rawReport.strategicOpportunityAssessment || 'Opportunity assessment not provided by AI',
-      meetingDynamicsStrategy: rawReport.meetingDynamicsStrategy || 'Meeting strategy not provided by AI',
-      keyQuestions: Array.isArray(rawReport.keyQuestions) ? rawReport.keyQuestions : ['Key questions not provided by AI'],
-      potentialObjectionsResponses: rawReport.potentialObjectionsResponses || 'Objection handling not provided by AI',
-      confidence: typeof rawReport.confidence === 'number' ? rawReport.confidence : 0.75,
-      promptUsed: fullPromptUsed,
-    };
-  } else {
-    // Legacy string format - put everything in executive summary
-    logger.warn('AI returned legacy string format instead of structured JSON');
-    return {
-      executiveSummary: rawReport || 'Report generation failed',
-      targetCompanyIntelligence: 'Report generated in legacy format. Please regenerate for detailed company analysis.',
-      meetingAttendeeAnalysis: 'Report generated in legacy format. Please regenerate for detailed attendee analysis.',
-      strategicOpportunityAssessment: 'Report generated in legacy format. Please regenerate for detailed opportunity assessment.',
-      meetingDynamicsStrategy: 'Report generated in legacy format. Please regenerate for detailed meeting strategy.',
-      keyQuestions: ['Report generated in legacy format. Please regenerate for specific questions.'],
-      potentialObjectionsResponses: 'Report generated in legacy format. Please regenerate for objection handling.',
-      confidence: 0.5,
-      promptUsed: fullPromptUsed,
-    };
-  }
-}
 
 export const researchSingleAttendee = asyncHandler(async (req: Request, res: Response) => {
   // Validate request for single attendee
@@ -359,10 +306,10 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
 
 
   // Generate intelligence report
-  let rawReport: any;
+  let report: string;
 
   try {
-    rawReport = await openaiService.generateBDIntelligenceReport(researchContext, true);
+    report = await openaiService.generateBDIntelligenceReport(researchContext, true) as string;
   } catch (error) {
     logger.error('Failed to generate BD intelligence report:', error);
     throw new AppError(500, 'Failed to generate intelligence report', 'AI_GENERATION_ERROR');
@@ -371,14 +318,14 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   // Build the complete prompt for visibility
   const fullPromptUsed = `SYSTEM PROMPT:\n${PROMPTS.BD_MEETING.SYSTEM}\n\nUSER PROMPT:\n${PROMPTS.BD_MEETING.USER}\n\nRESEARCH CONTEXT:\n${researchContext}`;
 
-  // Validate and convert report
-  const report = validateAndFormatReport(rawReport, fullPromptUsed);
-
   // Save report to file system for future reference
   const reportId = await reportsService.saveReport({
     company: data.company,
     purpose: data.purpose,
-    report,
+    report: {
+      content: report,
+      promptUsed: fullPromptUsed,
+    },
     research: researchResult,
     metadata: {
       company: data.company,
@@ -393,7 +340,10 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
     success: true,
     data: {
       reportId,
-      report,
+      report: {
+        content: report,
+        promptUsed: fullPromptUsed,
+      },
       research: researchResult,
       metadata: {
         company: data.company,
