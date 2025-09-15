@@ -201,6 +201,19 @@ export default function BDMeetingForm() {
       return;
     }
 
+    // Check if this is a CROmetrics or personal email attendee
+    const excludedDomains = [
+      'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
+      'crometrics.com', 'cro-metrics.com'
+    ];
+    const domain = attendee.email?.split('@')[1]?.toLowerCase();
+
+    if (domain && excludedDomains.some(excluded => domain.includes(excluded))) {
+      // Mark as completed without research
+      setResearchStatus(prev => ({ ...prev, [attendeeId]: 'completed' }));
+      return;
+    }
+
     const attendeeToResearch = {
       name: attendee.name,
       email: attendee.email || undefined,
@@ -260,6 +273,16 @@ export default function BDMeetingForm() {
   const getAttendeeStatus = (attendeeId: string) => researchStatus[attendeeId] || 'pending';
   const getAttendeeData = (attendeeId: string) => researchData[attendeeId];
 
+  // Helper function to check if attendee is internal
+  const isInternalAttendee = (attendee: any) => {
+    const excludedDomains = [
+      'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
+      'crometrics.com', 'cro-metrics.com'
+    ];
+    const domain = attendee.email?.split('@')[1]?.toLowerCase();
+    return domain && excludedDomains.some(excluded => domain.includes(excluded));
+  };
+
   // Helper function to research company
   const handleResearchCompany = () => {
     // Extract domain from attendees' emails
@@ -308,6 +331,18 @@ export default function BDMeetingForm() {
         'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
         'crometrics.com', 'cro-metrics.com' // Don't research CROmetrics employees
       ];
+
+      // Mark CROmetrics and personal email attendees as "completed" since they don't need research
+      const statusUpdates: Record<string, 'pending' | 'researching' | 'completed'> = {};
+      formData.attendees.forEach(attendee => {
+        const domain = attendee.email?.split('@')[1]?.toLowerCase();
+        if (domain && excludedDomains.some(excluded => domain.includes(excluded))) {
+          statusUpdates[attendee.id] = 'completed';
+        }
+      });
+      if (Object.keys(statusUpdates).length > 0) {
+        setResearchStatus(prev => ({ ...prev, ...statusUpdates }));
+      }
 
       // Filter attendees that should be researched
       const attendeesToResearch = formData.attendees.filter(attendee => {
@@ -758,39 +793,51 @@ export default function BDMeetingForm() {
                   </div>
                 </div>
 
-                {/* Research Results & HubSpot Status */}
+                {/* Research Results & Status */}
                 {getAttendeeStatus(attendee.id) === 'completed' && (
                   <div className="mt-3 space-y-2">
-                    {/* HubSpot Status */}
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={clsx(
-                          'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
-                          getAttendeeData(attendee.id)?.hubspotData
-                            ? 'bg-cro-green-100 text-cro-green-800'
-                            : 'bg-cro-yellow-100 text-cro-yellow-800'
-                        )}
-                      >
-                        {getAttendeeData(attendee.id)?.hubspotData
-                          ? '✓ Found in HubSpot'
-                          : '⚠ Not in HubSpot'}
-                      </span>
-                      {!getAttendeeData(attendee.id)?.hubspotData && attendee.email && (
-                        <button
-                          type="button"
-                          onClick={() => handleAddToHubSpot(attendee.id)}
-                          className="text-xs px-3 py-1 bg-cro-blue-700 text-white rounded-full hover:bg-cro-blue-800 transition-colors"
-                        >
-                          Add to HubSpot
-                        </button>
-                      )}
-                    </div>
+                    {isInternalAttendee(attendee) ? (
+                      // Internal attendee status
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-cro-blue-100 text-cro-blue-800">
+                          🏢 Internal Attendee
+                        </span>
+                      </div>
+                    ) : (
+                      // External attendee status
+                      <div>
+                        {/* HubSpot Status */}
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={clsx(
+                              'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
+                              getAttendeeData(attendee.id)?.hubspotData
+                                ? 'bg-cro-green-100 text-cro-green-800'
+                                : 'bg-cro-yellow-100 text-cro-yellow-800'
+                            )}
+                          >
+                            {getAttendeeData(attendee.id)?.hubspotData
+                              ? '✓ Found in HubSpot'
+                              : '⚠ Not in HubSpot'}
+                          </span>
+                          {!getAttendeeData(attendee.id)?.hubspotData && attendee.email && (
+                            <button
+                              type="button"
+                              onClick={() => handleAddToHubSpot(attendee.id)}
+                              className="text-xs px-3 py-1 bg-cro-blue-700 text-white rounded-full hover:bg-cro-blue-800 transition-colors"
+                            >
+                              Add to HubSpot
+                            </button>
+                          )}
+                        </div>
 
-                    {/* Research Summary */}
-                    {getAttendeeData(attendee.id)?.searchResults && (
-                      <div className="text-xs text-gray-600">
-                        ✓ Found {getAttendeeData(attendee.id).searchResults.length} research results
-                        {getAttendeeData(attendee.id)?.linkedinUrl && ' • LinkedIn profile found'}
+                        {/* Research Summary */}
+                        {getAttendeeData(attendee.id)?.searchResults && (
+                          <div className="text-xs text-gray-600 mt-2">
+                            ✓ Found {getAttendeeData(attendee.id).searchResults.length} research results
+                            {getAttendeeData(attendee.id)?.linkedinUrl && ' • LinkedIn profile found'}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -839,8 +886,8 @@ export default function BDMeetingForm() {
               </h4>
               <p className="text-xs text-cro-soft-black-600">
                 {canGenerateReport
-                  ? 'All required attendees researched! Click to generate your comprehensive BD intelligence report.'
-                  : 'Research the external attendees using the buttons above, then generate your report.'}
+                  ? 'Ready to generate! Click to create your comprehensive BD intelligence report.'
+                  : 'Please ensure all attendees have names and company information is provided.'}
               </p>
             </div>
             <button
