@@ -79,9 +79,11 @@ export default function BDMeetingForm() {
         setResearchData(prev => ({ ...prev, [attendeeId]: researchedAttendee }));
         setResearchStatus(prev => ({ ...prev, [attendeeId]: 'completed' }));
 
-        // Auto-populate form fields from research
+        // Auto-populate form fields from research - preserve company field explicitly
         setFormData(prev => ({
-          ...prev,
+          company: prev.company, // Explicitly preserve company field
+          purpose: prev.purpose,
+          additionalContext: prev.additionalContext,
           attendees: prev.attendees.map(attendee => {
             if (attendee.id === attendeeId) {
               const hubspotData = researchedAttendee.hubspotData;
@@ -333,9 +335,11 @@ export default function BDMeetingForm() {
           setResearchData(prev => ({ ...prev, [attendee.id]: researchedAttendee }));
           setResearchStatus(prev => ({ ...prev, [attendee.id]: 'completed' }));
 
-          // Auto-populate form fields from research (only update empty fields to preserve loaded data)
+          // Auto-populate form fields from research - preserve company field explicitly
           setFormData(prev => ({
-            ...prev,
+            company: prev.company, // Explicitly preserve company field
+            purpose: prev.purpose,
+            additionalContext: prev.additionalContext,
             attendees: prev.attendees.map(formAttendee => {
               if (formAttendee.id === attendee.id) {
                 const hubspotData = researchedAttendee.hubspotData;
@@ -365,13 +369,13 @@ export default function BDMeetingForm() {
   // Function to populate form with calendar event data and trigger automatic research
   const handleLoadMeetingDetails = async (event: any) => {
     const meetingData = extractMeetingData(event);
-    
+
     // Clear any existing research data to prevent conflicts
     setResearchData({});
     setResearchStatus({});
     setCompanyResearchData(null);
     setCompanyResearchStatus('idle');
-    
+
     // Set the form data
     setFormData(meetingData);
 

@@ -14,6 +14,9 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = '0.0.0.0'; // Bind to all interfaces for Railway
 
+// Trust proxy for Railway deployment
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet());
 

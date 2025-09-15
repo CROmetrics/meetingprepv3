@@ -30,24 +30,6 @@ export function MeetingPrepPage() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-cro-blue-100 via-white to-cro-green-100 py-12">
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-block px-4 py-2 bg-cro-yellow-100 text-cro-yellow-700 rounded-xl text-sm font-medium mb-4">
-              AI-Powered Intelligence
-            </span>
-            <h1 className="text-4xl font-bold text-cro-soft-black-700 mb-4">
-              Executive Meeting Preparation
-            </h1>
-            <p className="text-lg text-cro-purple-700 leading-relaxed">
-              Research meeting attendees and companies to generate comprehensive intelligence
-              reports. Optionally connect your calendar to automatically populate meeting details.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-6xl mx-auto">

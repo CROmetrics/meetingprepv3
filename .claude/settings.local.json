@@ -13,7 +13,20 @@
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "mcp__railway-mcp-server__check-railway-status",
+      "mcp__railway-mcp-server__get-logs",
+      "mcp__railway-mcp-server__deploy",
+      "mcp__railway-mcp-server__list-projects",
+      "mcp__railway-mcp-server__list-services",
+      "mcp__railway-mcp-server__link-service",
+      "Bash(railway status:*)",
+      "Bash(railway link:*)",
+      "Bash(railway service:*)",
+      "Bash(railway up:*)",
+      "Bash(npm install:*)",
+      "Bash(git stash:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []
