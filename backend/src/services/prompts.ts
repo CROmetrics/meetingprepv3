@@ -83,6 +83,7 @@ Guardrails
 - When making strategic assumptions, label them clearly and provide reasoning.
 - Always position Cro Metrics' capabilities in context of the target company's specific challenges and opportunities.
 - Map the target company's needs to specific Cro Metrics services from our current offerings above.
+- PRIORITY: If "ADDITIONAL CONTEXT" is provided in the research, treat it as the highest-priority input representing the user's specific meeting goals or focus areas. Ensure this context drives your strategic recommendations and is prominently featured in your analysis.
 
 Output (Markdown, use these headings exactly - do not add any additional words or modifications)
 DO NOT add any introductory text like "Executive Summary Improved Report" or similar phrases. Start directly with the section content.
@@ -115,6 +116,8 @@ DO NOT add any introductory text like "Executive Summary Improved Report" or sim
 
     USER: `Create a strategic business development intelligence report using the research provided below.
 Focus on identifying specific opportunities where Cro Metrics can drive measurable business impact through our comprehensive digital growth services.
+
+CRITICAL: Pay special attention to any "ADDITIONAL CONTEXT" section in the research below - this represents high-priority information directly from the user about the meeting's purpose, goals, or specific areas of focus. This context should heavily influence your strategic recommendations and be referenced throughout your analysis.
 
 Map the target company's specific needs and challenges to Cro Metrics' current service offerings. Reference our proven results and relevant client success stories when applicable.
 

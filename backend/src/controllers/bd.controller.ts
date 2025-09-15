@@ -301,6 +301,10 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
     researchContext += `**MEETING PURPOSE:** ${data.purpose}\n\n`;
   }
 
+  if (data.additionalContext) {
+    researchContext += `**ADDITIONAL CONTEXT (HIGH PRIORITY):** ${data.additionalContext}\n\n`;
+  }
+
   researchContext += `**ATTENDEES:**\n`;
   for (const attendee of attendeeResearch) {
     researchContext += `\n=== ${attendee.name} ===\n`;
@@ -353,9 +357,6 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
     researchContext += `- ${result.title}: ${result.snippet}\n`;
   }
 
-  if (data.additionalContext) {
-    researchContext += `\n**ADDITIONAL CONTEXT:**\n${data.additionalContext}\n`;
-  }
 
   // Generate intelligence report
   let rawReport: any;
