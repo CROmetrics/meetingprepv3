@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Users,
   Building2,
@@ -64,6 +64,9 @@ export default function BDMeetingForm() {
   // Company research state
   const [companyResearchData, setCompanyResearchData] = useState<any>(null);
   const [companyResearchStatus, setCompanyResearchStatus] = useState<'idle' | 'researching' | 'completed' | 'error'>('idle');
+
+  // Flag to trigger automatic research after loading meeting details
+  const [shouldAutoResearch, setShouldAutoResearch] = useState(false);
 
   // Individual attendee research mutation
   const singleResearchMutation = useMutation({
@@ -295,8 +298,45 @@ export default function BDMeetingForm() {
     }
   };
 
-  // Note: Automatic research function removed to prevent form data conflicts
-  // Individual research is handled by the singleResearchMutation above
+  // useEffect to trigger automatic research when shouldAutoResearch flag is set
+  useEffect(() => {
+    if (shouldAutoResearch && formData.company && formData.attendees.length > 0) {
+      setShouldAutoResearch(false); // Reset flag
+
+      // Define domains to exclude from research (personal emails + CROmetrics)
+      const excludedDomains = [
+        'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
+        'crometrics.com', 'cro-metrics.com' // Don't research CROmetrics employees
+      ];
+
+      // Filter attendees that should be researched
+      const attendeesToResearch = formData.attendees.filter(attendee => {
+        const domain = attendee.email?.split('@')[1]?.toLowerCase();
+        return attendee.name.trim() &&
+               attendee.email &&
+               domain &&
+               !excludedDomains.some(excluded => domain.includes(excluded));
+      });
+
+      // Research each attendee individually using the existing mutation
+      attendeesToResearch.forEach((attendee, index) => {
+        setTimeout(() => {
+          const attendeeToResearch = {
+            name: attendee.name,
+            email: attendee.email || undefined,
+            title: attendee.title || undefined,
+            company: attendee.company || undefined,
+            linkedinUrl: attendee.linkedinUrl || undefined,
+          };
+
+          singleResearchMutation.mutate({
+            attendeeId: attendee.id,
+            attendee: attendeeToResearch
+          });
+        }, index * 1000); // Stagger requests by 1 second each
+      });
+    }
+  }, [shouldAutoResearch, formData.company, formData.attendees, singleResearchMutation]);
 
   // Function to populate form with calendar event data and trigger automatic research
   const handleLoadMeetingDetails = async (event: any) => {
@@ -311,9 +351,8 @@ export default function BDMeetingForm() {
     // Set the form data
     setFormData(meetingData);
 
-    // Note: Automatic research has been disabled to prevent form data conflicts
-    // Users can manually research attendees using the individual research buttons
-    console.log('Meeting details loaded successfully. Use individual research buttons to research attendees.');
+    // Trigger automatic research after form data is set
+    setShouldAutoResearch(true);
   };
 
   return (
