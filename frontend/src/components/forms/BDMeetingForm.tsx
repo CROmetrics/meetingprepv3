@@ -295,76 +295,8 @@ export default function BDMeetingForm() {
     }
   };
 
-  // Function to research all attendees automatically
-  const researchAllAttendees = async (attendees: any[], company: string) => {
-    // Define domains to exclude from research (personal emails + CROmetrics)
-    const excludedDomains = [
-      'gmail.com', 'outlook.com', 'yahoo.com', 'hotmail.com', 'icloud.com',
-      'crometrics.com', 'cro-metrics.com' // Don't research CROmetrics employees
-    ];
-
-    // Only research external attendees with names and valid email domains
-    const attendeesToResearch = attendees.filter(attendee => {
-      const domain = attendee.email?.split('@')[1]?.toLowerCase();
-      return attendee.name.trim() &&
-             attendee.email &&
-             domain &&
-             !excludedDomains.some(excluded => domain.includes(excluded));
-    });
-
-    // Trigger research for each attendee sequentially to avoid overwhelming the API
-    for (const attendee of attendeesToResearch) {
-      try {
-        const attendeeToResearch = {
-          name: attendee.name,
-          email: attendee.email || undefined,
-          title: attendee.title || undefined,
-          company: attendee.company || undefined,
-          linkedinUrl: attendee.linkedinUrl || undefined,
-        };
-
-        // Set status to researching
-        setResearchStatus(prev => ({ ...prev, [attendee.id]: 'researching' }));
-
-        // Call the research API
-        const response = await api.researchSingleAttendee(company, attendeeToResearch);
-        const researchedAttendee = response.data?.attendee;
-
-        if (researchedAttendee) {
-          // Store research data
-          setResearchData(prev => ({ ...prev, [attendee.id]: researchedAttendee }));
-          setResearchStatus(prev => ({ ...prev, [attendee.id]: 'completed' }));
-
-          // Auto-populate form fields from research - preserve company field explicitly
-          setFormData(prev => ({
-            company: prev.company, // Explicitly preserve company field
-            purpose: prev.purpose,
-            additionalContext: prev.additionalContext,
-            attendees: prev.attendees.map(formAttendee => {
-              if (formAttendee.id === attendee.id) {
-                const hubspotData = researchedAttendee.hubspotData;
-                return {
-                  ...formAttendee,
-                  // Only update fields that are currently empty to preserve loaded meeting data
-                  email: formAttendee.email || hubspotData?.email || '',
-                  title: formAttendee.title || hubspotData?.jobtitle || '',
-                  company: formAttendee.company || hubspotData?.company || '',
-                  linkedinUrl: formAttendee.linkedinUrl || hubspotData?.linkedin_url || researchedAttendee.linkedinUrl || '',
-                };
-              }
-              return formAttendee;
-            })
-          }));
-        }
-      } catch (error) {
-        console.error(`Failed to research attendee ${attendee.name}:`, error);
-        setResearchStatus(prev => ({ ...prev, [attendee.id]: 'pending' }));
-      }
-
-      // Add a small delay between requests to be respectful to the API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  };
+  // Note: Automatic research function removed to prevent form data conflicts
+  // Individual research is handled by the singleResearchMutation above
 
   // Function to populate form with calendar event data and trigger automatic research
   const handleLoadMeetingDetails = async (event: any) => {
@@ -379,13 +311,9 @@ export default function BDMeetingForm() {
     // Set the form data
     setFormData(meetingData);
 
-    // Automatically trigger research for all attendees
-    if (meetingData.company && meetingData.attendees.length > 0) {
-      // Wait a bit for the form data to be set and localStorage to update
-      setTimeout(() => {
-        researchAllAttendees(meetingData.attendees, meetingData.company);
-      }, 200);
-    }
+    // Note: Automatic research has been disabled to prevent form data conflicts
+    // Users can manually research attendees using the individual research buttons
+    console.log('Meeting details loaded successfully. Use individual research buttons to research attendees.');
   };
 
   return (
