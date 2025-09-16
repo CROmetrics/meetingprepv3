@@ -76,7 +76,7 @@ export function PromptStyleEditor({
         userPrompt: localUserPrompt
       });
     }
-  }, [localSystemPrompt, localUserPrompt, promptStyle, onCustomPromptsChange]);
+  }, [localSystemPrompt, localUserPrompt, promptStyle]);
 
   const handleStyleChange = (style: PromptStyle) => {
     onPromptStyleChange(style);
@@ -149,13 +149,22 @@ export function PromptStyleEditor({
               </label>
 
               <div className="space-y-2">
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label
+                  className="flex items-start space-x-3 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStyleChange('sales');
+                  }}
+                >
                   <input
                     type="radio"
                     name="promptStyle"
                     value="sales"
                     checked={promptStyle === 'sales'}
-                    onChange={() => handleStyleChange('sales')}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleStyleChange('sales');
+                    }}
                     disabled={disabled}
                     className="mt-1 h-4 w-4 text-cro-blue-600 focus:ring-cro-blue-500 border-cro-plat-300"
                   />
@@ -167,13 +176,22 @@ export function PromptStyleEditor({
                   </div>
                 </label>
 
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label
+                  className="flex items-start space-x-3 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStyleChange('none');
+                  }}
+                >
                   <input
                     type="radio"
                     name="promptStyle"
                     value="none"
                     checked={promptStyle === 'none'}
-                    onChange={() => handleStyleChange('none')}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleStyleChange('none');
+                    }}
                     disabled={disabled}
                     className="mt-1 h-4 w-4 text-cro-blue-600 focus:ring-cro-blue-500 border-cro-plat-300"
                   />
@@ -185,13 +203,22 @@ export function PromptStyleEditor({
                   </div>
                 </label>
 
-                <label className="flex items-start space-x-3 cursor-pointer">
+                <label
+                  className="flex items-start space-x-3 cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStyleChange('custom');
+                  }}
+                >
                   <input
                     type="radio"
                     name="promptStyle"
                     value="custom"
                     checked={promptStyle === 'custom'}
-                    onChange={() => handleStyleChange('custom')}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleStyleChange('custom');
+                    }}
                     disabled={disabled}
                     className="mt-1 h-4 w-4 text-cro-blue-600 focus:ring-cro-blue-500 border-cro-plat-300"
                   />
