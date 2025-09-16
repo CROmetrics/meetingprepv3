@@ -1,3 +1,10 @@
+export type PromptStyle = 'sales' | 'none' | 'custom';
+
+export interface CustomPrompts {
+  systemPrompt: string;
+  userPrompt: string;
+}
+
 export interface Attendee {
   name: string;
   email?: string;
@@ -11,6 +18,8 @@ export interface BDMeetingRequest {
   attendees: Attendee[];
   purpose?: string;
   additionalContext?: string;
+  promptStyle?: PromptStyle;
+  customPrompts?: CustomPrompts;
 }
 
 export interface AttendeeWithStatus extends Attendee {
@@ -28,6 +37,8 @@ export interface BDMeetingFormData {
   purpose?: string;
   additionalContext?: string;
   attendees: AttendeeWithStatus[];
+  promptStyle?: PromptStyle;
+  customPrompts?: CustomPrompts;
 }
 
 export interface BDMeetingFormDataSimple {
@@ -35,6 +46,8 @@ export interface BDMeetingFormDataSimple {
   purpose?: string;
   additionalContext?: string;
   attendees: AttendeeWithId[];
+  promptStyle?: PromptStyle;
+  customPrompts?: CustomPrompts;
 }
 
 export interface ApiResponse<T = unknown> {

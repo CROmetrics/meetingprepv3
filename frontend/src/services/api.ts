@@ -97,6 +97,8 @@ class ApiService {
       ),
       purpose: formData.purpose,
       additionalContext: formData.additionalContext,
+      promptStyle: formData.promptStyle,
+      customPrompts: formData.customPrompts,
     };
     return this.client.post('/bd/generate', apiRequest, {
       timeout: 180000, // 3 minutes for report generation

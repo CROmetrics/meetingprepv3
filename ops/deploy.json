@@ -1,0 +1,7 @@
+{
+  "branch": "main",
+  "serviceName": "meetingprepv3",
+  "environmentName": "production",
+  "deployMode": "git",
+  "smokeTestsPath": "ops/smoke-tests.yaml"
+}

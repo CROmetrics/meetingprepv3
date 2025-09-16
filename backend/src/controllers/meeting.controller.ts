@@ -14,6 +14,11 @@ const meetingBriefSchema = z.object({
   attendees: z.array(z.string()).default([]),
   purpose: z.string().optional(),
   accountContext: z.string().optional(),
+  promptStyle: z.enum(['sales', 'none', 'custom']).optional(),
+  customPrompts: z.object({
+    systemPrompt: z.string(),
+    userPrompt: z.string(),
+  }).optional(),
 });
 
 export const generateMeetingBrief = asyncHandler(async (req: Request, res: Response) => {
@@ -78,7 +83,9 @@ export const generateMeetingBrief = asyncHandler(async (req: Request, res: Respo
     formattedContext,
     enrichedAttendees,
     data.purpose,
-    data.accountContext
+    data.accountContext,
+    data.promptStyle || 'sales',
+    data.customPrompts
   );
 
   res.json({

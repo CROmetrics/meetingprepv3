@@ -1,3 +1,10 @@
+export type PromptStyle = 'sales' | 'none' | 'custom';
+
+export interface CustomPrompts {
+  systemPrompt: string;
+  userPrompt: string;
+}
+
 export interface Attendee {
   name: string;
   email?: string;
@@ -12,6 +19,8 @@ export interface BDMeetingRequest {
   attendees: Attendee[];
   purpose?: string;
   additionalContext?: string;
+  promptStyle?: PromptStyle;
+  customPrompts?: CustomPrompts;
 }
 
 export interface AttendeeResearch {

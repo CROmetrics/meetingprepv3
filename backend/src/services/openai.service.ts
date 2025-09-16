@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import config from '../config/env';
 import logger from '../utils/logger';
-import { PROMPTS } from './prompts';
-import { IntelligenceReport } from '../types/bd.types';
+import { PROMPTS, getPrompts } from './prompts';
+import { IntelligenceReport, PromptStyle, CustomPrompts } from '../types/bd.types';
 import { ToolResult } from '../types/api.types';
 import researchService from './research.service';
 import hubspotService from './hubspot.service';
@@ -32,30 +32,49 @@ class OpenAIService {
     slackContext: string,
     attendees: string[],
     purpose?: string,
-    accountContext?: string
+    accountContext?: string,
+    promptStyle: PromptStyle = 'sales',
+    customPrompts?: CustomPrompts
   ): Promise<string> {
     const client = this.ensureClient();
 
     try {
-      // Build the user prompt
-      let userPrompt = PROMPTS.INTERNAL_MEETING.USER;
-      userPrompt += '\n\n**ATTENDEES:**\n';
-      userPrompt += attendees.length > 0 ? attendees.join(', ') : 'Not specified';
-      
-      if (purpose) {
-        userPrompt += `\n\n**MEETING PURPOSE:**\n${purpose}`;
+      // Get the appropriate prompts
+      const prompts = getPrompts('INTERNAL_MEETING', promptStyle, customPrompts);
+
+      // Build the user prompt - start with base user prompt or add context to custom prompt
+      let userPrompt = prompts.USER;
+
+      // For non-custom prompts, append context as before
+      if (promptStyle !== 'custom') {
+        userPrompt += '\n\n**ATTENDEES:**\n';
+        userPrompt += attendees.length > 0 ? attendees.join(', ') : 'Not specified';
+
+        if (purpose) {
+          userPrompt += `\n\n**MEETING PURPOSE:**\n${purpose}`;
+        }
+
+        if (accountContext) {
+          userPrompt += `\n\n**ACCOUNT CONTEXT:**\n${accountContext}`;
+        }
+
+        userPrompt += `\n\n**RECENT SLACK ACTIVITY:**\n${slackContext}`;
+      } else {
+        // For custom prompts, append context in a simpler format
+        const contextData = [
+          `ATTENDEES: ${attendees.length > 0 ? attendees.join(', ') : 'Not specified'}`,
+          purpose ? `MEETING PURPOSE: ${purpose}` : null,
+          accountContext ? `ACCOUNT CONTEXT: ${accountContext}` : null,
+          `RECENT SLACK ACTIVITY: ${slackContext}`
+        ].filter(Boolean).join('\n\n');
+
+        userPrompt += `\n\n${contextData}`;
       }
-      
-      if (accountContext) {
-        userPrompt += `\n\n**ACCOUNT CONTEXT:**\n${accountContext}`;
-      }
-      
-      userPrompt += `\n\n**RECENT SLACK ACTIVITY:**\n${slackContext}`;
 
       const response = await client.chat.completions.create({
         model: config.OPENAI_MODEL,
         messages: [
-          { role: 'system', content: PROMPTS.INTERNAL_MEETING.SYSTEM },
+          { role: 'system', content: prompts.SYSTEM },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.7,
@@ -64,8 +83,7 @@ class OpenAIService {
 
       const brief = response.choices[0]?.message?.content || 'Failed to generate brief';
 
-
-      logger.info('Generated internal meeting brief');
+      logger.info(`Generated internal meeting brief using ${promptStyle} prompt style`);
       return brief;
     } catch (error) {
       logger.error('Error generating internal meeting brief:', error);
@@ -75,16 +93,28 @@ class OpenAIService {
 
   async generateBDIntelligenceReport(
     researchContext: string,
-    tools: boolean = true
+    tools: boolean = true,
+    promptStyle: PromptStyle = 'sales',
+    customPrompts?: CustomPrompts
   ): Promise<IntelligenceReport | string> {
     const client = this.ensureClient();
 
     try {
-      let userPrompt = PROMPTS.BD_MEETING.USER;
-      userPrompt += `\n\n**RESEARCH CONTEXT:**\n${researchContext}`;
+      // Get the appropriate prompts
+      const prompts = getPrompts('BD_MEETING', promptStyle, customPrompts);
+
+      // Build the user prompt
+      let userPrompt = prompts.USER;
+
+      // Append research context
+      if (promptStyle !== 'custom') {
+        userPrompt += `\n\n**RESEARCH CONTEXT:**\n${researchContext}`;
+      } else {
+        userPrompt += `\n\nRESEARCH CONTEXT:\n${researchContext}`;
+      }
 
       const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-        { role: 'system', content: PROMPTS.BD_MEETING.SYSTEM },
+        { role: 'system', content: prompts.SYSTEM },
         { role: 'user', content: userPrompt },
       ];
 
@@ -130,7 +160,7 @@ class OpenAIService {
 
       const report = response.choices[0]?.message?.content || 'Failed to generate report';
 
-      logger.info('Generated BD intelligence report');
+      logger.info(`Generated BD intelligence report using ${promptStyle} prompt style`);
       return report;
     } catch (error) {
       logger.error('Error generating BD intelligence report:', error);

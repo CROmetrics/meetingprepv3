@@ -1,6 +1,9 @@
 import { CRO_METRICS_CONTEXT } from '../config/constants';
+import { PromptStyle, CustomPrompts } from '../types/bd.types';
 
-export const PROMPTS = {
+// Base prompt templates organized by style
+export const PROMPT_TEMPLATES = {
+  sales: {
   INTERNAL_MEETING: {
     SYSTEM: `You are Cro Metrics' Executive Meeting Copilot.
 Goal: produce a decisive, 1–2 page meeting brief (≈800–1200 words) that helps us win trust and drive next steps.
@@ -142,4 +145,39 @@ Output: Return ONLY the improved report in the same format.`,
 
 If the original report is in JSON format, return the improved version as valid JSON. If it's in text format, return improved text format.`,
   },
+  },
+
+  none: {
+    INTERNAL_MEETING: {
+      SYSTEM: '',
+      USER: 'Create a meeting brief based on the provided context.',
+    },
+    BD_MEETING: {
+      SYSTEM: '',
+      USER: 'Create a business development intelligence report based on the provided research context.',
+    },
+    CRITIQUE: {
+      SYSTEM: '',
+      USER: 'Review and improve the following report.',
+    },
+  },
 };
+
+// Function to get prompts based on style and custom prompts
+export function getPrompts(
+  promptType: 'INTERNAL_MEETING' | 'BD_MEETING' | 'CRITIQUE',
+  style: PromptStyle = 'sales',
+  customPrompts?: CustomPrompts
+) {
+  if (style === 'custom' && customPrompts) {
+    return {
+      SYSTEM: customPrompts.systemPrompt,
+      USER: customPrompts.userPrompt,
+    };
+  }
+
+  return PROMPT_TEMPLATES[style === 'custom' ? 'sales' : style][promptType];
+}
+
+// Backward compatibility - export the sales prompts as PROMPTS
+export const PROMPTS = PROMPT_TEMPLATES.sales;

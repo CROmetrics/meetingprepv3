@@ -1,3 +1,5 @@
+import { PromptStyle, CustomPrompts } from './bd.types';
+
 export interface MeetingBriefRequest {
   channelId: string;
   lookbackDays?: number;
@@ -5,6 +7,8 @@ export interface MeetingBriefRequest {
   attendees?: string[];
   purpose?: string;
   accountContext?: string;
+  promptStyle?: PromptStyle;
+  customPrompts?: CustomPrompts;
 }
 
 export interface MeetingBriefResponse {

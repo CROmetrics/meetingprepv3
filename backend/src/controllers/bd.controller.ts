@@ -8,7 +8,7 @@ import { asyncHandler, AppError } from '../middleware/error.middleware';
 import { logUsage } from '../utils/logger';
 import logger from '../utils/logger';
 import { BDMeetingRequest, ResearchResult, AttendeeResearch } from '../types/bd.types';
-import { PROMPTS } from '../services/prompts';
+import { PROMPTS, getPrompts } from '../services/prompts';
 
 // Helper to convert empty strings to undefined
 const emptyToUndefined = z
@@ -35,6 +35,11 @@ const bdMeetingSchema = z.object({
   attendees: z.array(attendeeSchema).min(1, 'At least one attendee is required'),
   purpose: z.string().optional(),
   additionalContext: z.string().optional(),
+  promptStyle: z.enum(['sales', 'none', 'custom']).optional(),
+  customPrompts: z.object({
+    systemPrompt: z.string(),
+    userPrompt: z.string(),
+  }).optional(),
 });
 
 
@@ -309,14 +314,20 @@ export const generateBDReport = asyncHandler(async (req: Request, res: Response)
   let report: string;
 
   try {
-    report = await openaiService.generateBDIntelligenceReport(researchContext, true) as string;
+    report = await openaiService.generateBDIntelligenceReport(
+      researchContext,
+      true,
+      data.promptStyle || 'sales',
+      data.customPrompts
+    ) as string;
   } catch (error) {
     logger.error('Failed to generate BD intelligence report:', error);
     throw new AppError(500, 'Failed to generate intelligence report', 'AI_GENERATION_ERROR');
   }
 
   // Build the complete prompt for visibility
-  const fullPromptUsed = `SYSTEM PROMPT:\n${PROMPTS.BD_MEETING.SYSTEM}\n\nUSER PROMPT:\n${PROMPTS.BD_MEETING.USER}\n\nRESEARCH CONTEXT:\n${researchContext}`;
+  const prompts = getPrompts('BD_MEETING', data.promptStyle || 'sales', data.customPrompts);
+  const fullPromptUsed = `SYSTEM PROMPT:\n${prompts.SYSTEM}\n\nUSER PROMPT:\n${prompts.USER}\n\nRESEARCH CONTEXT:\n${researchContext}`;
 
   // Save report to file system for future reference
   const reportId = await reportsService.saveReport({

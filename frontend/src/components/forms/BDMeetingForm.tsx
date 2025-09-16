@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import api from '../../services/api';
-import { BDMeetingRequest, Attendee, BDMeetingFormDataSimple, AttendeeWithId } from '../../types';
+import { BDMeetingRequest, Attendee, BDMeetingFormDataSimple, AttendeeWithId, PromptStyle } from '../../types';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import { BDPromptVisibility } from '../common/BDPromptVisibility';
+import { PromptStyleEditor } from './PromptStyleEditor';
 import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useCalendarIntegration } from '../../hooks/useCalendarIntegration';
 import ReactMarkdown from 'react-markdown';
@@ -39,6 +40,11 @@ export default function BDMeetingForm() {
         linkedinUrl: '',
       },
     ],
+    promptStyle: 'sales' as PromptStyle,
+    customPrompts: {
+      systemPrompt: '',
+      userPrompt: '',
+    },
   });
 
   // Calendar integration
@@ -243,6 +249,8 @@ export default function BDMeetingForm() {
       attendees: cleanAttendees,
       purpose: formData.purpose?.trim() || undefined,
       additionalContext: formData.additionalContext?.trim() || undefined,
+      promptStyle: formData.promptStyle || 'sales',
+      customPrompts: formData.customPrompts,
     };
 
     generateMutation.mutate(request);
@@ -874,6 +882,15 @@ export default function BDMeetingForm() {
             className="w-full px-4 py-3 border border-cro-plat-300 rounded-2xl bg-white text-cro-soft-black-700 focus:outline-none focus:ring-2 focus:ring-cro-blue-700 focus:border-cro-blue-700 transition-colors resize-none"
           />
         </div>
+
+        {/* Prompt Customization */}
+        <PromptStyleEditor
+          promptStyle={formData.promptStyle || 'sales'}
+          customPrompts={formData.customPrompts || { systemPrompt: '', userPrompt: '' }}
+          onPromptStyleChange={(style) => setFormData({ ...formData, promptStyle: style })}
+          onCustomPromptsChange={(prompts) => setFormData({ ...formData, customPrompts: prompts })}
+          disabled={generateMutation.isPending}
+        />
 
         {/* Step 2: Generate Report */}
         <div className="mb-4 p-4 bg-gradient-to-r from-cro-blue-50 to-cro-green-50 rounded-2xl border-2 border-cro-blue-200">
