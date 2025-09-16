@@ -10,81 +10,72 @@ tests:
 
   - name: "BD Meeting Form - Sales Prompt Style"
     method: "POST"
-    path: "/api/bd/analyze"
+    path: "/api/bd/generate"
     headers:
       Content-Type: "application/json"
     body:
       company: "Test Company"
-      role: "CEO"
-      details: "Looking for new partnerships"
+      attendees:
+        - name: "John Doe"
+          email: "john@testcompany.com"
+          title: "CEO"
+      purpose: "Looking for new partnerships"
       promptStyle: "sales"
     expectedStatus: 200
-    description: "Test BD meeting analysis with sales prompt style"
+    description: "Test BD meeting generation with sales prompt style"
     responseValidation:
-      - field: "suggestedQuestions"
-        type: "array"
-        minLength: 1
-      - field: "keyTopics"
-        type: "array"
+      - field: "success"
+        type: "boolean"
+        expectedValue: true
+      - field: "data.report.content"
+        type: "string"
         minLength: 1
 
   - name: "BD Meeting Form - No Prompt Style"
     method: "POST"
-    path: "/api/bd/analyze"
+    path: "/api/bd/generate"
     headers:
       Content-Type: "application/json"
     body:
       company: "Test Company"
-      role: "CEO"
-      details: "Looking for new partnerships"
+      attendees:
+        - name: "Jane Smith"
+          email: "jane@testcompany.com"
+          title: "CTO"
+      purpose: "Looking for new partnerships"
       promptStyle: "none"
     expectedStatus: 200
-    description: "Test BD meeting analysis with no prompt style"
+    description: "Test BD meeting generation with no prompt style"
     responseValidation:
-      - field: "suggestedQuestions"
-        type: "array"
-        minLength: 1
-      - field: "keyTopics"
-        type: "array"
+      - field: "success"
+        type: "boolean"
+        expectedValue: true
+      - field: "data.report.content"
+        type: "string"
         minLength: 1
 
   - name: "BD Meeting Form - Custom Prompt Style"
     method: "POST"
-    path: "/api/bd/analyze"
+    path: "/api/bd/generate"
     headers:
       Content-Type: "application/json"
     body:
       company: "Test Company"
-      role: "CEO"
-      details: "Looking for new partnerships"
+      attendees:
+        - name: "Alex Johnson"
+          email: "alex@testcompany.com"
+          title: "VP Engineering"
+      purpose: "Looking for new partnerships"
       promptStyle: "custom"
-      customPrompt: "Focus on technical integration aspects and scalability concerns."
+      customPrompts:
+        systemPrompt: "You are a technical partnership analyst."
+        userPrompt: "Focus on technical integration aspects and scalability concerns."
     expectedStatus: 200
-    description: "Test BD meeting analysis with custom prompt style"
+    description: "Test BD meeting generation with custom prompt style"
     responseValidation:
-      - field: "suggestedQuestions"
-        type: "array"
-        minLength: 1
-      - field: "keyTopics"
-        type: "array"
-        minLength: 1
-
-  - name: "Meeting Form - Basic Functionality"
-    method: "POST"
-    path: "/api/meetings/analyze"
-    headers:
-      Content-Type: "application/json"
-    body:
-      company: "Test Company"
-      attendees: "John Doe, Jane Smith"
-      agenda: "Quarterly review meeting"
-      promptStyle: "none"
-    expectedStatus: 200
-    description: "Test basic meeting analysis functionality"
-    responseValidation:
-      - field: "suggestedQuestions"
-        type: "array"
-        minLength: 1
-      - field: "keyTopics"
-        type: "array"
+      - field: "success"
+        type: "boolean"
+        expectedValue: true
+      - field: "data.report.content"
+        type: "string"
         minLength: 1
